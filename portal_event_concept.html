@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Portal — Event Concept</title>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#06080f;--bg2:#0a0e1c;--bg3:#0f1525;--bg4:#141b2e;--text:#d0dff5;--muted:rgba(180,205,255,0.5);--dim:rgba(180,205,255,0.1);--nova:#ff3355;--nexus:#aa44ff;--aurum:#ffaa22;--solaris:#22ccff;--grid:rgba(30,60,140,0.07);}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Exo 2',sans-serif;font-weight:400;overflow-x:hidden;line-height:1.6;}
+#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
+.grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:55px 55px;}
+.scan{position:fixed;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(80,140,255,0.05),transparent);animation:scan 12s linear infinite;z-index:1;pointer-events:none;}
+@keyframes scan{from{top:0}to{top:100vh}}
+.corner{position:fixed;width:18px;height:18px;z-index:10;pointer-events:none;}
+.c-tl{top:10px;left:10px;border-top:1px solid rgba(80,140,255,0.3);border-left:1px solid rgba(80,140,255,0.3);}
+.c-tr{top:10px;right:10px;border-top:1px solid rgba(80,140,255,0.3);border-right:1px solid rgba(80,140,255,0.3);}
+.c-bl{bottom:10px;left:10px;border-bottom:1px solid rgba(80,140,255,0.3);border-left:1px solid rgba(80,140,255,0.3);}
+.c-br{bottom:10px;right:10px;border-bottom:1px solid rgba(80,140,255,0.3);border-right:1px solid rgba(80,140,255,0.3);}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:14px 32px;display:flex;align-items:center;justify-content:space-between;background:rgba(6,8,15,0.85);border-bottom:1px solid var(--dim);backdrop-filter:blur(8px);}
+.nav-logo{font-family:'Orbitron',monospace;font-size:14px;font-weight:700;letter-spacing:3px;color:#fff;}
+.nav-logo span{color:var(--nova);}
+.nav-links{display:flex;gap:24px;}
+.nav-links a{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--muted);text-decoration:none;transition:color 0.2s;}
+.nav-links a:hover{color:#fff;}
+.nav-live{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:#44ff99;display:flex;align-items:center;gap:6px;}
+.live-dot{width:6px;height:6px;border-radius:50%;background:#44ff99;animation:blink 1.4s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.2;}}
+.wrap{position:relative;z-index:2;max-width:1200px;margin:0 auto;padding:0 40px;}
+section{padding:100px 0 0;}
+.sec-eyebrow{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:4px;color:var(--muted);margin-bottom:14px;}
+.sec-title{font-family:'Orbitron',monospace;font-size:clamp(28px,4vw,52px);font-weight:700;color:#fff;line-height:1.1;margin-bottom:12px;}
+.sec-sub{font-size:16px;font-weight:300;color:var(--muted);max-width:640px;margin:0 auto 48px;text-align:center;line-height:1.7;}
+.center{text-align:center;}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 0 60px;}
+.hero-eyebrow{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:6px;color:var(--muted);margin-bottom:28px;animation:fup .8s ease both;}
+.hero-h{font-family:'Orbitron',monospace;font-weight:900;color:#fff;line-height:.9;animation:fup .8s .1s ease both;}
+.hero-h .the{display:block;font-size:clamp(36px,6vw,72px);letter-spacing:14px;color:rgba(255,255,255,.55);}
+.hero-h .portal{display:block;font-size:clamp(88px,18vw,200px);letter-spacing:4px;text-shadow:0 0 60px rgba(80,140,255,.15);}
+.hero-tagline{font-family:'Share Tech Mono',monospace;font-size:clamp(11px,1.5vw,14px);letter-spacing:8px;color:var(--muted);margin-top:18px;animation:fup .8s .2s ease both;}
+.orbital-wrap{width:320px;height:320px;margin:52px auto 36px;animation:fup .8s .3s ease both;}
+.city-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;animation:fup .8s .45s ease both;}
+.cbtn{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--c);border:1px solid var(--c);background:transparent;padding:8px 18px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;text-decoration:none;transition:background .2s,color .2s;}
+.cbtn:hover{background:var(--c);color:#000;}
+.cbtn .d{width:6px;height:6px;border-radius:50%;background:var(--c);box-shadow:0 0 8px var(--c);}
+@keyframes fup{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+/* PLANETS */
+.planets-row{display:grid;grid-template-columns:repeat(2,1fr);gap:0;}
+@media(min-width:800px){.planets-row{grid-template-columns:repeat(4,1fr);}}
+.pcard{border-top:2px solid var(--pc);background:var(--bg2);position:relative;overflow:hidden;}
+.pcard-planet{height:210px;display:flex;align-items:center;justify-content:center;}
+.planet-svg{width:150px;height:150px;}
+.pcard-body{padding:0 22px 26px;}
+.pcard-eyebrow{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--pc);margin-bottom:8px;}
+.pcard-name{font-family:'Orbitron',monospace;font-size:clamp(20px,2.5vw,34px);font-weight:700;color:var(--pc);margin-bottom:4px;}
+.pcard-city{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--muted);margin-bottom:12px;}
+.pcard-div{width:36px;height:1px;background:var(--pc);opacity:.4;margin-bottom:12px;}
+.pcard-desc{font-size:13px;font-weight:300;color:var(--muted);line-height:1.65;margin-bottom:14px;}
+.pcard-tags{display:flex;flex-wrap:wrap;gap:6px;}
+.ptag{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;color:var(--pc);border:1px solid var(--pc);padding:4px 10px;opacity:.75;}
+
+/* GAME STEPS */
+.game-steps{display:flex;flex-direction:column;border-left:2px solid var(--bg4);margin-left:8px;}
+.gstep{display:flex;gap:24px;padding:24px 0 24px 32px;border-bottom:1px solid var(--dim);position:relative;}
+.gstep:last-child{border-bottom:none;}
+.gstep::before{content:'';position:absolute;left:-7px;top:30px;width:12px;height:12px;border-radius:50%;background:var(--sn);border:2px solid var(--sn);}
+.gstep-num{font-family:'Orbitron',monospace;font-size:28px;font-weight:700;color:var(--sn);opacity:.35;flex-shrink:0;width:52px;}
+.gstep-title{font-size:16px;font-weight:600;color:#fff;margin-bottom:8px;}
+.gstep-desc{font-size:13px;font-weight:300;color:var(--muted);line-height:1.65;}
+
+/* QEX */
+.qex-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:32px;}
+@media(min-width:700px){.qex-grid{grid-template-columns:repeat(3,1fr);}}
+.qex{background:var(--bg3);border:1px solid var(--dim);padding:20px 18px;}
+.qex-label{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--ql);margin-bottom:10px;}
+.qex-q{font-size:14px;font-weight:600;color:#fff;margin-bottom:16px;line-height:1.4;}
+.qex-bars{display:flex;flex-direction:column;gap:6px;}
+.qex-row{display:flex;align-items:center;gap:8px;}
+.qex-ans{font-size:12px;color:var(--text);width:62px;flex-shrink:0;}
+.qex-bw{flex:1;height:6px;background:var(--dim);}
+.qex-b{height:100%;background:var(--ql);}
+.qex-pct{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--ql);width:32px;text-align:right;}
+.pts-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.pts-card{background:var(--bg3);border:1px solid var(--dim);padding:28px 20px;text-align:center;}
+.pts-val{font-family:'Orbitron',monospace;font-size:clamp(26px,4vw,46px);font-weight:700;color:var(--pvc);margin-bottom:6px;}
+.pts-label{font-size:12px;font-weight:300;color:var(--muted);}
+
+/* APP */
+.app-layout{display:grid;grid-template-columns:1fr;gap:48px;align-items:start;}
+@media(min-width:800px){.app-layout{grid-template-columns:1fr 1fr;}}
+.phones-group{display:flex;flex-direction:column;gap:0;align-items:flex-start;}
+.phones-row{display:flex;gap:14px;margin-bottom:14px;}
+.phones-row.centered{margin-left:70px;}
+.phone{border:2px solid var(--phc);border-radius:18px;background:var(--bg2);padding:18px 16px 14px;width:155px;flex-shrink:0;position:relative;}
+.phone.feat{box-shadow:0 0 28px var(--phg);}
+.phone-header{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.phone-dot{width:10px;height:10px;border-radius:50%;background:var(--phc);box-shadow:0 0 8px var(--phc);flex-shrink:0;}
+.phone-hlines{display:flex;flex-direction:column;gap:4px;flex:1;}
+.phone-hline{height:4px;border-radius:2px;background:var(--phc);}
+.phone-hline.full{width:100%;opacity:.5;}
+.phone-hline.half{width:55%;opacity:.3;}
+.phone-score{font-family:'Orbitron',monospace;font-size:26px;font-weight:700;color:var(--phc);margin-bottom:12px;}
+.phone-block{height:52px;background:rgba(0,0,0,.3);border:1px solid var(--phc);border-left:3px solid var(--phc);opacity:.4;margin-bottom:10px;border-radius:4px;}
+.phone-blines{display:flex;flex-direction:column;gap:5px;margin-bottom:4px;}
+.phone-bline{height:4px;border-radius:2px;background:var(--phc);}
+.phone-bline.w80{width:80%;opacity:.45;}
+.phone-bline.w55{width:55%;opacity:.3;}
+.phone-bline.w35{width:35%;opacity:.2;}
+.phone-lbl{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:3px;color:var(--phc);text-align:center;margin-top:8px;opacity:.8;}
+.app-feats{display:flex;flex-direction:column;gap:20px;}
+.app-feat{display:flex;gap:16px;align-items:flex-start;}
+.app-feat-ico{width:44px;height:44px;border-radius:10px;background:var(--bg4);border:1px solid var(--dim);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.app-feat-title{font-size:15px;font-weight:600;color:#fff;margin-bottom:4px;}
+.app-feat-desc{font-size:13px;font-weight:300;color:var(--muted);line-height:1.6;}
+.tech-note{background:var(--bg3);border:1px solid var(--dim);padding:14px 18px;font-size:12px;font-weight:300;color:var(--muted);line-height:1.6;margin-top:20px;}
+.tech-note strong{color:var(--text);font-weight:500;}
+
+/* LEADERBOARD */
+.lb-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.lb-hdr-lbl{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--muted);}
+.lb-live{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:#44ff99;display:flex;align-items:center;gap:5px;}
+.lb-rows{display:flex;flex-direction:column;gap:8px;margin-bottom:24px;}
+.lb-row{background:var(--bg3);border:1px solid var(--dim);padding:14px 18px;display:flex;align-items:center;gap:14px;}
+.lb-row.t1{border-color:rgba(255,204,68,.3);background:rgba(255,204,68,.04);}
+.lb-med{font-size:18px;width:28px;text-align:center;flex-shrink:0;}
+.lb-pos{font-family:'Orbitron',monospace;font-size:11px;color:var(--muted);width:24px;}
+.lb-dot{width:8px;height:8px;border-radius:50%;background:var(--lc);box-shadow:0 0 8px var(--lc);flex-shrink:0;}
+.lb-name{font-size:15px;font-weight:600;color:#fff;flex:1;}
+.lb-planet{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--lc);}
+.lb-score{font-family:'Orbitron',monospace;font-size:18px;font-weight:700;color:#fff;margin:0 12px;}
+.lb-bw{width:80px;height:4px;background:var(--dim);}
+.lb-b{height:100%;background:var(--lc);}
+.lb-rew{background:var(--bg3);border:1px solid var(--dim);padding:20px 18px;display:flex;gap:16px;align-items:flex-start;}
+.lb-rew-ico{font-size:28px;flex-shrink:0;}
+.lb-rew-ttl{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--muted);margin-bottom:6px;}
+.lb-rew-desc{font-size:13px;font-weight:300;color:var(--muted);line-height:1.6;}
+
+/* PORTAL */
+.portal-layout{display:grid;grid-template-columns:1fr;gap:48px;align-items:center;}
+@media(min-width:800px){.portal-layout{grid-template-columns:1fr 1fr;}}
+.wh-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;}
+.wh-svg{width:280px;height:280px;}
+.wh-status{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:#44ff99;display:flex;align-items:center;gap:6px;}
+.pi-title{font-size:clamp(20px,3vw,30px);font-weight:700;color:#fff;margin-bottom:16px;line-height:1.2;}
+.pi-body{font-size:14px;font-weight:300;color:var(--muted);line-height:1.75;margin-bottom:14px;}
+.pi-body strong{color:var(--text);font-weight:500;}
+.pi-setup{background:var(--bg3);border:1px solid var(--dim);padding:14px 18px;font-size:13px;font-weight:300;color:var(--muted);line-height:1.6;margin-top:8px;}
+.pi-setup strong{color:var(--text);}
+
+/* TIMELINE */
+.timeline{display:flex;flex-direction:column;border-left:2px solid var(--bg4);margin-left:8px;}
+.titem{display:flex;gap:20px;padding:22px 0 22px 32px;border-bottom:1px solid var(--dim);position:relative;}
+.titem:last-child{border-bottom:none;}
+.titem::before{content:'';position:absolute;left:-6px;top:28px;width:10px;height:10px;border-radius:50%;background:var(--tc,var(--bg));border:2px solid var(--tc,var(--muted));}
+.ttime{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);flex-shrink:0;width:50px;padding-top:2px;}
+.ttitle{font-size:15px;font-weight:600;color:#fff;margin-bottom:6px;}
+.tdesc{font-size:13px;font-weight:300;color:var(--muted);line-height:1.65;}
+
+/* FINALE */
+.finale{border:1px solid rgba(255,204,68,.25);background:rgba(255,204,68,.03);padding:64px 40px;text-align:center;position:relative;overflow:hidden;margin-top:80px;}
+.finale::before{content:'';position:absolute;top:-50px;left:50%;transform:translateX(-50%);width:300px;height:100px;background:rgba(255,204,68,.05);border-radius:50%;filter:blur(30px);}
+.finale-tag{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:4px;color:rgba(255,204,68,.45);margin-bottom:14px;}
+.finale-title{font-family:'Orbitron',monospace;font-size:clamp(40px,7vw,80px);font-weight:900;color:#ffcc44;letter-spacing:3px;line-height:1;margin-bottom:16px;}
+.finale-sub{font-size:15px;font-weight:300;color:rgba(255,204,68,.5);max-width:460px;margin:0 auto 36px;line-height:1.65;}
+.finale-stats{display:flex;justify-content:center;gap:48px;flex-wrap:wrap;}
+.fval{font-family:'Orbitron',monospace;font-size:clamp(40px,5vw,60px);font-weight:900;color:#ffcc44;line-height:1;}
+.flbl{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:rgba(255,204,68,.4);margin-top:6px;}
+
+@keyframes orb-a{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes orb-b{from{transform:rotate(60deg)}to{transform:rotate(420deg)}}
+@keyframes orb-c{from{transform:rotate(200deg)}to{transform:rotate(-160deg)}}
+@keyframes orb-d{from{transform:rotate(290deg)}to{transform:rotate(650deg)}}
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+<div class="grid-bg"></div>
+<div class="scan"></div>
+<div class="corner c-tl"></div><div class="corner c-tr"></div>
+<div class="corner c-bl"></div><div class="corner c-br"></div>
+
+<nav>
+  <div class="nav-logo">THE <span>PORTAL</span></div>
+  <div class="nav-links">
+    <a href="#planety" data-i18n="nav.planets">Planety</a>
+    <a href="#gra" data-i18n="nav.game">Gra</a>
+    <a href="#app" data-i18n="nav.app">App</a>
+    <a href="#portal" data-i18n="nav.portal">Portal</a>
+    <a href="#timeline" data-i18n="nav.timeline">Timeline</a>
+  </div>
+  <div class="nav-live"><div class="live-dot"></div>4 CITIES CONNECTED</div>
+</nav>
+
+<div class="wrap">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow" data-i18n="hero.eyebrow">INTERGALACTIC EVENT CONCEPT</div>
+  <h1 class="hero-h"><span class="the">THE</span><span class="portal">PORTAL</span></h1>
+  <p class="hero-tagline">4 WORLDS &nbsp;·&nbsp; 4 CITIES &nbsp;·&nbsp; 1 SIGNAL</p>
+  <div class="orbital-wrap">
+    <svg viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%">
+      <circle cx="160" cy="160" r="56"  fill="none" stroke="rgba(255,51,85,.22)"  stroke-width=".8"/>
+      <circle cx="160" cy="160" r="84"  fill="none" stroke="rgba(80,140,255,.18)" stroke-width=".8"/>
+      <circle cx="160" cy="160" r="110" fill="none" stroke="rgba(170,68,255,.15)" stroke-width=".8"/>
+      <circle cx="160" cy="160" r="135" fill="none" stroke="rgba(255,170,34,.13)" stroke-width=".8"/>
+      <circle cx="160" cy="160" r="28" fill="rgba(80,140,255,.06)" stroke="rgba(80,140,255,.3)" stroke-width=".8"/>
+      <circle cx="160" cy="160" r="16" fill="rgba(80,140,255,.1)" stroke="rgba(80,140,255,.4)" stroke-width=".5"/>
+      <text x="160" y="164" text-anchor="middle" font-family="'Share Tech Mono'" font-size="8" fill="rgba(100,160,255,.8)" letter-spacing="1">LIVE</text>
+      <g style="animation:orb-a 7s linear infinite;transform-origin:160px 160px"><circle cx="160" cy="104" r="8" fill="#ff3355"/><circle cx="160" cy="104" r="13" fill="none" stroke="#ff3355" stroke-width=".5" opacity=".35"/></g>
+      <g style="animation:orb-b 11s linear infinite;transform-origin:160px 160px"><circle cx="244" cy="160" r="7" fill="#22ccff"/><circle cx="244" cy="160" r="11" fill="none" stroke="#22ccff" stroke-width=".5" opacity=".35"/></g>
+      <g style="animation:orb-c 15s linear infinite reverse;transform-origin:160px 160px"><circle cx="76" cy="160" r="7" fill="#aa44ff"/><circle cx="76" cy="160" r="11" fill="none" stroke="#aa44ff" stroke-width=".5" opacity=".35"/></g>
+      <g style="animation:orb-d 19s linear infinite;transform-origin:160px 160px"><circle cx="160" cy="25" r="6" fill="#ffaa22"/><circle cx="160" cy="25" r="10" fill="none" stroke="#ffaa22" stroke-width=".5" opacity=".35"/></g>
+    </svg>
+  </div>
+  <div class="city-btns">
+    <a class="cbtn" style="--c:var(--nova)"    href="nova.html"><div class="d"></div>WARSZAWA</a>
+    <a class="cbtn" style="--c:var(--nexus)"   href="nexus.html"><div class="d"></div>PRAGA</a>
+    <a class="cbtn" style="--c:var(--aurum)"   href="aurum.html"><div class="d"></div>BUDAPESZT</a>
+    <a class="cbtn" style="--c:var(--solaris)" href="solaris.html"><div class="d"></div>KIJÓW</a>
+  </div>
+</div>
+
+<!-- PLANETY -->
+<section id="planety">
+  <div class="center">
+    <div class="sec-eyebrow" data-i18n="planets.eyebrow">// 01 — PLANETARY SYSTEM</div>
+    <h2 class="sec-title" data-i18n="planets.title">Cztery planety, cztery tożsamości</h2>
+    <p class="sec-sub" data-i18n="planets.sub">Każde miasto to osobny świat z własnym klimatem i estetyką. Planeta to Twoja identyfikacja w apce — kolor, nazwa, przynależność. Nie drużyna, nie przewaga. Tylko skąd jesteś.</p>
+  </div>
+  <div class="planets-row">
+    <div class="pcard" style="--pc:var(--nova)">
+      <div class="pcard-planet">
+        <svg class="planet-svg" viewBox="0 0 150 150">
+          <defs><radialGradient id="gn" cx="38%" cy="32%"><stop offset="0%" stop-color="#ff9977"/><stop offset="55%" stop-color="#cc2244"/><stop offset="100%" stop-color="#550011"/></radialGradient></defs>
+          <ellipse cx="75" cy="98" rx="60" ry="9" fill="rgba(255,51,85,.1)"/>
+          <circle cx="75" cy="72" r="50" fill="url(#gn)"/>
+          <ellipse cx="75" cy="72" rx="66" ry="11" fill="none" stroke="rgba(255,100,80,.4)" stroke-width="1.5"/>
+          <ellipse cx="75" cy="72" rx="58" ry="8"  fill="none" stroke="rgba(255,80,60,.22)" stroke-width="1"/>
+        </svg>
+      </div>
+      <div class="pcard-body">
+        <div class="pcard-eyebrow">// PLANET 01</div>
+        <div class="pcard-name">NOVA</div>
+        <div class="pcard-city">WARSZAWA · PL</div>
+        <div class="pcard-div"></div>
+        <div class="pcard-desc" data-i18n="nova.desc">Czerwona planeta ognia i ambicji. Energia, impet, duch lidera. Obsługa w czerwono-czarnych strojach astronautów.</div>
+        <div class="pcard-tags"><span class="ptag" data-i18n="nova.t1">Ogień</span><span class="ptag" data-i18n="nova.t2">Ambicja</span><span class="ptag" data-i18n="nova.t3">Czerwień</span></div>
+      </div>
+    </div>
+    <div class="pcard" style="--pc:var(--nexus)">
+      <div class="pcard-planet">
+        <svg class="planet-svg" viewBox="0 0 150 150">
+          <defs><radialGradient id="gnx" cx="38%" cy="32%"><stop offset="0%" stop-color="#dd99ff"/><stop offset="55%" stop-color="#8833cc"/><stop offset="100%" stop-color="#2a0055"/></radialGradient></defs>
+          <ellipse cx="75" cy="98" rx="60" ry="9" fill="rgba(170,68,255,.1)"/>
+          <circle cx="75" cy="72" r="50" fill="url(#gnx)"/>
+          <ellipse cx="75" cy="55" rx="68" ry="13" fill="none" stroke="rgba(180,80,255,.42)" stroke-width="1.5"/>
+          <ellipse cx="75" cy="55" rx="60" ry="9"  fill="none" stroke="rgba(160,60,255,.22)" stroke-width="1"/>
+          <circle cx="108" cy="42" r="4" fill="rgba(220,180,255,.55)"/>
+        </svg>
+      </div>
+      <div class="pcard-body">
+        <div class="pcard-eyebrow">// PLANET 02</div>
+        <div class="pcard-name">NEXUS</div>
+        <div class="pcard-city">PRAGA · CZ</div>
+        <div class="pcard-div"></div>
+        <div class="pcard-desc" data-i18n="nexus.desc">Fioletowa planeta tajemnic. Mystyczne wibracje, stare energie nowego świata. Obsługa w głębokiej purpurze ze złotymi detalami.</div>
+        <div class="pcard-tags"><span class="ptag" data-i18n="nexus.t1">Tajemnica</span><span class="ptag" data-i18n="nexus.t2">Fiolet</span><span class="ptag" data-i18n="nexus.t3">Głębia</span></div>
+      </div>
+    </div>
+    <div class="pcard" style="--pc:var(--aurum)">
+      <div class="pcard-planet">
+        <svg class="planet-svg" viewBox="0 0 150 150">
+          <defs><radialGradient id="gau" cx="38%" cy="32%"><stop offset="0%" stop-color="#ffe099"/><stop offset="55%" stop-color="#dd8811"/><stop offset="100%" stop-color="#552200"/></radialGradient></defs>
+          <ellipse cx="75" cy="98" rx="60" ry="9" fill="rgba(255,170,34,.1)"/>
+          <circle cx="75" cy="72" r="50" fill="url(#gau)"/>
+          <ellipse cx="75" cy="72" rx="68" ry="11" fill="none" stroke="rgba(255,190,60,.38)" stroke-width="1.5"/>
+          <ellipse cx="75" cy="72" rx="61" ry="8"  fill="none" stroke="rgba(255,160,40,.2)" stroke-width="1"/>
+        </svg>
+      </div>
+      <div class="pcard-body">
+        <div class="pcard-eyebrow">// PLANET 03</div>
+        <div class="pcard-name">AURUM</div>
+        <div class="pcard-city">BUDAPESZT · HU</div>
+        <div class="pcard-div"></div>
+        <div class="pcard-desc" data-i18n="aurum.desc">Złota planeta przepychu i ciepła. Termalne energie, prestiż i dawna świetność w nowym wymiarze. Obsługa w złoto-brązowych strojach.</div>
+        <div class="pcard-tags"><span class="ptag" data-i18n="aurum.t1">Złoto</span><span class="ptag" data-i18n="aurum.t2">Przepych</span><span class="ptag" data-i18n="aurum.t3">Ciepło</span></div>
+      </div>
+    </div>
+    <div class="pcard" style="--pc:var(--solaris)">
+      <div class="pcard-planet">
+        <svg class="planet-svg" viewBox="0 0 150 150">
+          <defs><radialGradient id="gso" cx="38%" cy="32%"><stop offset="0%" stop-color="#99eeff"/><stop offset="55%" stop-color="#1188cc"/><stop offset="100%" stop-color="#002244"/></radialGradient></defs>
+          <ellipse cx="75" cy="98" rx="60" ry="9" fill="rgba(34,204,255,.1)"/>
+          <circle cx="75" cy="72" r="50" fill="url(#gso)"/>
+          <circle cx="75" cy="72" r="58" fill="none" stroke="rgba(60,200,255,.28)" stroke-width="1" stroke-dasharray="4,4"/>
+          <circle cx="75" cy="72" r="63" fill="none" stroke="rgba(60,180,255,.13)" stroke-width=".8" stroke-dasharray="2,6"/>
+          <line x1="50" y1="47" x2="100" y2="97" stroke="rgba(100,220,255,.18)" stroke-width=".8"/>
+          <line x1="100" y1="47" x2="50"  y2="97" stroke="rgba(100,220,255,.18)" stroke-width=".8"/>
+        </svg>
+      </div>
+      <div class="pcard-body">
+        <div class="pcard-eyebrow">// PLANET 04</div>
+        <div class="pcard-name">SOLARIS</div>
+        <div class="pcard-city">KIJÓW · UA</div>
+        <div class="pcard-div"></div>
+        <div class="pcard-desc" data-i18n="solaris.desc">Niebiesko-złota planeta słońca i nieugiętej siły. Elektryczna energia i duch odrodzenia. Obsługa w głębokim błękicie ze złotem.</div>
+        <div class="pcard-tags"><span class="ptag" data-i18n="solaris.t1">Energia</span><span class="ptag" data-i18n="solaris.t2">Siła</span><span class="ptag" data-i18n="solaris.t3">Błękit</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GRA -->
+<section id="gra">
+  <div class="center">
+    <div class="sec-eyebrow" data-i18n="game.eyebrow">// 02 — THE GAME</div>
+    <h2 class="sec-title" data-i18n="game.title">Większość powie...</h2>
+    <p class="sec-sub" data-i18n="game.sub">Nie ma jednej dobrej odpowiedzi. Wygrywasz gdy myślisz tak jak większość. Proste, szybkie, zaskakujące — i zawsze inne gdy grasz z czterema krajami naraz.</p>
+  </div>
+  <div class="game-steps">
+    <div class="gstep" style="--sn:var(--nova)"><div class="gstep-num">01</div><div><div class="gstep-title" data-i18n="game.s1t">Pytanie pojawia się w apce</div><div class="gstep-desc" data-i18n="game.s1d">Mission Control wysyła pytanie do wszystkich uczestników w 4 miastach jednocześnie. Odlicza czas — zazwyczaj 20–30 sekund. Pytania bez jednej prawidłowej odpowiedzi: wolne skojarzenia, "co byś wybrał", "pierwsze co przychodzi do głowy".</div></div></div>
+    <div class="gstep" style="--sn:var(--nexus)"><div class="gstep-num">02</div><div><div class="gstep-title" data-i18n="game.s2t">Każdy wpisuje lub wybiera odpowiedź</div><div class="gstep-desc" data-i18n="game.s2d">Albo wpisz własną odpowiedź (open text), albo wybierz z kilku opcji (multiple choice). Format dobierany do pytania. Liczysz tylko na siebie — Twoja odpowiedź, Twoje punkty.</div></div></div>
+    <div class="gstep" style="--sn:var(--aurum)"><div class="gstep-num">03</div><div><div class="gstep-title" data-i18n="game.s3t">Reveal — co powiedziała większość?</div><div class="gstep-desc" data-i18n="game.s3d">To jest ten moment. Wyniki pojawiają się na ekranach i na portalach. Widać jak głosowały poszczególne miasta. Warszawa powiedziała co innego niż Kijów. Naturalny śmiech, rozmowy, reakcje na portalach — bez żadnej dodatkowej mechaniki.</div></div></div>
+    <div class="gstep" style="--sn:var(--solaris)"><div class="gstep-num">04</div><div><div class="gstep-title" data-i18n="game.s4t">Punkty trafiają na Twój profil</div><div class="gstep-desc" data-i18n="game.s4d">Im więcej osób powiedziało to samo co Ty — tym więcej punktów. Odpowiedź najpopularniejsza = max punkty. Prędkość odpowiedzi jako tiebreaker. Leaderboard aktualizuje się na żywo.</div></div></div>
+  </div>
+  <div style="margin-top:48px">
+    <div class="qex-grid">
+      <div class="qex" style="--ql:var(--nova)"><div class="qex-label" data-i18n="qex.l1">PRZYKŁAD — KULTUROWE</div><div class="qex-q" data-i18n="qex.q1">"Pierwsze europejskie miasto które przychodzi Ci do głowy"</div><div class="qex-bars"><div class="qex-row"><div class="qex-ans" data-i18n="qex.a1.1">Paryż</div><div class="qex-bw"><div class="qex-b" style="width:72%"></div></div><div class="qex-pct">72%</div></div><div class="qex-row"><div class="qex-ans" data-i18n="qex.a1.2">Rzym</div><div class="qex-bw"><div class="qex-b" style="width:18%"></div></div><div class="qex-pct">18%</div></div><div class="qex-row"><div class="qex-ans" data-i18n="qex.a1.3">Berlin</div><div class="qex-bw"><div class="qex-b" style="width:10%"></div></div><div class="qex-pct">10%</div></div></div></div>
+      <div class="qex" style="--ql:var(--nexus)"><div class="qex-label" data-i18n="qex.l2">PRZYKŁAD — ABSURDALNE</div><div class="qex-q" data-i18n="qex.q2">"Co zabrałbyś z Ziemi gdybyś był kosmitą?"</div><div class="qex-bars"><div class="qex-row"><div class="qex-ans" data-i18n="qex.a2.1">Pizzę</div><div class="qex-bw"><div class="qex-b" style="width:44%"></div></div><div class="qex-pct">44%</div></div><div class="qex-row"><div class="qex-ans">Internet</div><div class="qex-bw"><div class="qex-b" style="width:35%"></div></div><div class="qex-pct">35%</div></div><div class="qex-row"><div class="qex-ans" data-i18n="qex.a2.3">Kota</div><div class="qex-bw"><div class="qex-b" style="width:21%"></div></div><div class="qex-pct">21%</div></div></div></div>
+      <div class="qex" style="--ql:var(--aurum)"><div class="qex-label" data-i18n="qex.l3">PRZYKŁAD — MIĘDZY KRAJAMI</div><div class="qex-q" data-i18n="qex.q3">"Najlepsze jedzenie na imprezę"</div><div class="qex-bars"><div class="qex-row"><div class="qex-ans">Pizza</div><div class="qex-bw"><div class="qex-b" style="width:58%"></div></div><div class="qex-pct">58%</div></div><div class="qex-row"><div class="qex-ans" data-i18n="qex.a3.2">Burgery</div><div class="qex-bw"><div class="qex-b" style="width:28%"></div></div><div class="qex-pct">28%</div></div><div class="qex-row"><div class="qex-ans">Sushi</div><div class="qex-bw"><div class="qex-b" style="width:14%"></div></div><div class="qex-pct">14%</div></div></div></div>
+    </div>
+    <div class="pts-row">
+      <div class="pts-card"><div class="pts-val" style="--pvc:var(--nova)">+500</div><div class="pts-label" data-i18n="pts.l1">Trafiłeś w najpopularniejszą odpowiedź</div></div>
+      <div class="pts-card"><div class="pts-val" style="--pvc:var(--aurum)">+250</div><div class="pts-label" data-i18n="pts.l2">Trafiłeś w drugą najpopularniejszą</div></div>
+      <div class="pts-card"><div class="pts-val" style="--pvc:var(--solaris)">+100</div><div class="pts-label" data-i18n="pts.l3">Bonus za szybkość odpowiedzi</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- APP -->
+<section id="app">
+  <div class="center">
+    <div class="sec-eyebrow" data-i18n="app.eyebrow">// 03 — MOBILE APP</div>
+    <h2 class="sec-title" data-i18n="app.title">Twój profil, Twoje punkty</h2>
+    <p class="sec-sub" data-i18n="app.sub">Jedna apka, cztery kolory planet. Każdy uczestnik ma własny profil z historią odpowiedzi i aktualnym wynikiem. Zero pobierania — wejście przez QR kod.</p>
+  </div>
+  <div class="app-layout">
+    <div class="phones-group">
+      <div class="phones-row">
+        <div class="phone" style="--phc:var(--nova);--phg:rgba(255,51,85,.2)">
+          <div class="phone-header"><div class="phone-dot"></div><div class="phone-hlines"><div class="phone-hline full"></div><div class="phone-hline half"></div></div></div>
+          <div class="phone-score">2840</div>
+          <div class="phone-block"></div>
+          <div class="phone-blines"><div class="phone-bline w80"></div><div class="phone-bline w55"></div><div class="phone-bline w35"></div></div>
+          <div class="phone-lbl">NOVA</div>
+        </div>
+        <div class="phone" style="--phc:var(--nexus);--phg:rgba(170,68,255,.2)">
+          <div class="phone-header"><div class="phone-dot"></div><div class="phone-hlines"><div class="phone-hline full"></div><div class="phone-hline half"></div></div></div>
+          <div class="phone-score">2210</div>
+          <div class="phone-block"></div>
+          <div class="phone-blines"><div class="phone-bline w55"></div><div class="phone-bline w80"></div><div class="phone-bline w35"></div></div>
+          <div class="phone-lbl">NEXUS</div>
+        </div>
+        <div class="phone feat" style="--phc:var(--aurum);--phg:rgba(255,170,34,.28)">
+          <div class="phone-header"><div class="phone-dot"></div><div class="phone-hlines"><div class="phone-hline full"></div><div class="phone-hline half"></div></div></div>
+          <div class="phone-score">3120</div>
+          <div class="phone-block"></div>
+          <div class="phone-blines"><div class="phone-bline w80"></div><div class="phone-bline w80"></div><div class="phone-bline w55"></div></div>
+          <div class="phone-lbl">AURUM</div>
+        </div>
+      </div>
+      <div class="phones-row centered">
+        <div class="phone" style="--phc:var(--solaris);--phg:rgba(34,204,255,.2)">
+          <div class="phone-header"><div class="phone-dot"></div><div class="phone-hlines"><div class="phone-hline full"></div><div class="phone-hline half"></div></div></div>
+          <div class="phone-score">1980</div>
+          <div class="phone-block"></div>
+          <div class="phone-blines"><div class="phone-bline w80"></div><div class="phone-bline w55"></div><div class="phone-bline w35"></div></div>
+          <div class="phone-lbl">SOLARIS</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3 style="font-family:'Exo 2';font-size:22px;font-weight:700;color:#fff;margin-bottom:24px;" data-i18n="app.feats.title">Co zawiera apka</h3>
+      <div class="app-feats">
+        <div class="app-feat"><div class="app-feat-ico">👤</div><div><div class="app-feat-title" data-i18n="app.f1t">Profil uczestnika</div><div class="app-feat-desc" data-i18n="app.f1d">Imię, planeta, aktualny wynik, historia odpowiedzi. Każdy widzi swój postęp przez całą noc.</div></div></div>
+        <div class="app-feat"><div class="app-feat-ico">🎮</div><div><div class="app-feat-title" data-i18n="app.f2t">Pytanie live</div><div class="app-feat-desc" data-i18n="app.f2d">Gdy Mission Control startuje rundę, pytanie pojawia się natychmiast z odliczaniem. Jeden tap lub wpisanie odpowiedzi.</div></div></div>
+        <div class="app-feat"><div class="app-feat-ico">📊</div><div><div class="app-feat-title" data-i18n="app.f3t">Reveal — wyniki rundy</div><div class="app-feat-desc" data-i18n="app.f3d">Po każdym pytaniu widać jak odpowiedziały wszystkie miasta. Tu zaczyna się rozmowa i śmiech.</div></div></div>
+        <div class="app-feat"><div class="app-feat-ico">🏆</div><div><div class="app-feat-title">Galactic Leaderboard</div><div class="app-feat-desc" data-i18n="app.f4d">Top 20 uczestników ze wszystkich 4 miast. Aktualizuje się po każdej rundzie. Widoczny też na portalach.</div></div></div>
+        <div class="app-feat"><div class="app-feat-ico">📅</div><div><div class="app-feat-title" data-i18n="app.f5t">Agenda eventu</div><div class="app-feat-desc" data-i18n="app.f5d">Plan nocy jako Mission Log. Godziny, aktywności, informacje praktyczne — wszystko w jednym miejscu.</div></div></div>
+      </div>
+      <div class="tech-note" data-i18n="app.tech"><strong>Tech:</strong> PWA — wejście przez QR kod, zero instalacji. Realtime przez WebSockets. Jeden backend, 4 tematy kolorystyczne per planeta.</div>
+    </div>
+  </div>
+</section>
+
+<!-- LEADERBOARD -->
+<section>
+  <div class="center">
+    <div class="sec-eyebrow" data-i18n="lb.eyebrow">// 04 — NAGRODY</div>
+    <h2 class="sec-title" data-i18n="lb.title">Galactic Leaderboard</h2>
+    <p class="sec-sub" data-i18n="lb.sub">Jeden ranking, cztery planety. Wygrywają osoby, nie miasta. Na końcu nocy top gracze dostają nagrody — bez względu na to skąd są.</p>
+  </div>
+  <div class="lb-hdr"><div class="lb-hdr-lbl" data-i18n="lb.hdr">TOP GALACTIC PLAYERS</div><div class="lb-live"><div class="live-dot"></div>Live</div></div>
+  <div class="lb-rows">
+    <div class="lb-row t1"><div class="lb-med">🥇</div><div class="lb-dot" style="--lc:var(--aurum)"></div><div class="lb-name">Katarzyna W.</div><div class="lb-planet" style="--lc:var(--aurum)">AURUM</div><div class="lb-score">6041</div><div class="lb-bw"><div class="lb-b" style="width:100%;background:var(--aurum)"></div></div></div>
+    <div class="lb-row"><div class="lb-med">🥈</div><div class="lb-dot" style="--lc:var(--nova)"></div><div class="lb-name">Michał P.</div><div class="lb-planet" style="--lc:var(--nova)">NOVA</div><div class="lb-score">2840</div><div class="lb-bw"><div class="lb-b" style="width:47%;background:var(--nova)"></div></div></div>
+    <div class="lb-row"><div class="lb-med">🥉</div><div class="lb-dot" style="--lc:var(--nexus)"></div><div class="lb-name">Tomáš H.</div><div class="lb-planet" style="--lc:var(--nexus)">NEXUS</div><div class="lb-score">5311</div><div class="lb-bw"><div class="lb-b" style="width:88%;background:var(--nexus)"></div></div></div>
+    <div class="lb-row"><div class="lb-pos">04</div><div class="lb-dot" style="--lc:var(--solaris)"></div><div class="lb-name">Olena K.</div><div class="lb-planet" style="--lc:var(--solaris)">SOLARIS</div><div class="lb-score">4970</div><div class="lb-bw"><div class="lb-b" style="width:82%;background:var(--solaris)"></div></div></div>
+    <div class="lb-row"><div class="lb-pos">05</div><div class="lb-dot" style="--lc:var(--aurum)"></div><div class="lb-name">Ádám B.</div><div class="lb-planet" style="--lc:var(--aurum)">AURUM</div><div class="lb-score">5386</div><div class="lb-bw"><div class="lb-b" style="width:89%;background:var(--aurum)"></div></div></div>
+  </div>
+  <div class="lb-rew"><div class="lb-rew-ico">🎁</div><div><div class="lb-rew-ttl" data-i18n="lb.rew.title">NAGRODY KOŃCOWE</div><div class="lb-rew-desc" data-i18n="lb.rew.desc">Top gracze z całego leaderboardu — bez podziału na miasta — otrzymują nagrody/upominki na koniec eventu. Wyniki ogłasza Mission Control na wszystkich 4 portalach jednocześnie.</div></div></div>
+</section>
+
+<!-- PORTAL -->
+<section id="portal">
+  <div class="sec-eyebrow" data-i18n="portal.eyebrow">// 05 — PORTAL SYSTEM</div>
+  <h2 class="sec-title" data-i18n="portal.title">Okno między planetami</h2>
+  <div class="portal-layout" style="margin-top:40px">
+    <div class="wh-wrap">
+      <div style="position:relative;width:300px;height:300px;">
+        <canvas id="wormhole-canvas" width="300" height="300" style="display:block;border-radius:50%;"></canvas>
+        <!-- Planet labels orbiting -->
+        <div id="wh-label-nova"   style="position:absolute;font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;color:#ff3355;pointer-events:none;white-space:nowrap;">NOVA</div>
+        <div id="wh-label-nexus"  style="position:absolute;font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;color:#aa44ff;pointer-events:none;white-space:nowrap;">NEXUS</div>
+        <div id="wh-label-aurum"  style="position:absolute;font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;color:#ffaa22;pointer-events:none;white-space:nowrap;">AURUM</div>
+        <div id="wh-label-solaris"style="position:absolute;font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;color:#22ccff;pointer-events:none;white-space:nowrap;">SOLARIS</div>
+      </div>
+      <div class="wh-status"><div class="live-dot"></div><span data-i18n="portal.status">WORMHOLE ACTIVE</span></div>
+    </div>
+    <div>
+      <div class="pi-title" data-i18n="portal.pi.title">Zawsze włączony,<br>przez całą noc</div>
+      <div class="pi-body" data-i18n="portal.pi.b1">Fizyczna instalacja — okrągły lub prostokątny ekran z kamerą skierowaną na tłum. Stały live stream między wszystkimi 4 miastami. <strong>Nie ma przełączania, nie ma schowania.</strong> Jak te portale między Lublinem a Wilnem — po prostu jest i działa.</div>
+      <div class="pi-body" data-i18n="portal.pi.b2">Uczestnicy podchodzą, machają, widzą ludzi z innych planet w czasie rzeczywistym. Nikt tego nie moderuje. To się dzieje samo. Gdy po rundzie pojawia się reveal z wynikami — każde miasto widzi jak zareagowały inne.</div>
+      <div class="pi-setup" data-i18n="portal.pi.setup"><strong>Setup:</strong> min. 65" ekran per miasto, kamera szerokokątna, dedykowany stream. Stylizacja jako wormhole — rama, efekty świetlne, kosmiczny klimat. Słuchawki z mikrofonem dla chętnych do rozmowy.</div>
+    </div>
+  </div>
+</section>
+
+<!-- TIMELINE -->
+<section id="timeline">
+  <div class="center">
+    <div class="sec-eyebrow" data-i18n="tl.eyebrow">// 06 — MISSION TIMELINE</div>
+    <h2 class="sec-title" data-i18n="tl.title">Scenariusz nocy</h2>
+  </div>
+  <div class="timeline" style="margin-top:40px">
+    <div class="titem" style="--tc:rgba(180,205,255,.4)"><div class="ttime">20:00</div><div><div class="ttitle" data-i18n="tl.t1">Portale aktywne</div><div class="tdesc" data-i18n="tl.d1">Uczestnicy wchodzą i skanują QR kod na wejściu. Rejestracja w apce, wybór nicku, planeta przypisana automatycznie po lokalizacji. Ekrany-portale już nadają live z innych miast.</div></div></div>
+    <div class="titem" style="--tc:#fff"><div class="ttime">21:00</div><div><div class="ttitle" data-i18n="tl.t2">Mission Control — start galaktyki</div><div class="tdesc" data-i18n="tl.d2">Oficjalne otwarcie. Głos z kadru, na portalach pojawia się mapa 4 planet. Krótkie intro — kim jesteście, skąd jesteście, na czym polega gra.</div></div></div>
+    <div class="titem" style="--tc:var(--nova)"><div class="ttime">21:15</div><div><div class="ttitle" data-i18n="tl.t3">Runda rozgrzewkowa — 3 pytania</div><div class="tdesc" data-i18n="tl.d3">Łatwe pytania, żeby wszyscy zrozumieli mechanikę. Wyniki nie liczą się do rankingu. Po każdym pytaniu reveal z podziałem na miasta — pierwsze "och!" gdy widać różnice między Warszawą a Kijowem.</div></div></div>
+    <div class="titem" style="--tc:var(--nexus)"><div class="ttime">22:00</div><div><div class="ttitle" data-i18n="tl.t4">Blok 1 — pytania właściwe</div><div class="tdesc" data-i18n="tl.d4">8–10 pytań. Mix kulturowych, absurdalnych, firmowych. Leaderboard na portalu aktualizuje się na żywo. Pierwsze gwiazdy rankingu zaczynają odskakiwać.</div></div></div>
+    <div class="titem" style="--tc:rgba(180,205,255,.4)"><div class="ttime">22:45</div><div><div class="ttitle" data-i18n="tl.t5">Przerwa — wyniki połowy</div><div class="tdesc" data-i18n="tl.d5">Mission Control ogłasza top 5 po połowie gry. Dobry moment na kontakt przez portal — każde miasto widzi kto prowadzi u pozostałych.</div></div></div>
+    <div class="titem" style="--tc:var(--aurum)"><div class="ttime">23:15</div><div><div class="ttitle" data-i18n="tl.t6">Blok 2 — podwójne punkty</div><div class="tdesc" data-i18n="tl.d6">Ostatnie 8 pytań z podwójną stawką. Trudniejsze, bardziej prowokacyjne. Ranking może się całkowicie odwrócić. Napięcie buduje się naturalnie.</div></div></div>
+    <div class="titem" style="--tc:#fff"><div class="ttime">00:00</div><div><div class="ttitle" data-i18n="tl.t7">Finał — ogłoszenie zwycięzców</div><div class="tdesc" data-i18n="tl.d7">Mission Control ogłasza wyniki na wszystkich 4 portalach jednocześnie. Wręczenie nagród lokalnie w każdym mieście. Zwycięzcy widoczni na ekranach całej galaktyki.</div></div></div>
+  </div>
+</section>
+
+<!-- GAME DEMO -->
+<section id="demo" style="padding-bottom:80px;">
+  <div class="center">
+    <div class="sec-eyebrow">// 07 — GAMIFICATION DEMO</div>
+    <h2 class="sec-title" id="demo-title">A panel that feels like a real event app</h2>
+    <p class="sec-sub" id="demo-sub">This section has 3 views: a start screen, a TV-style game board, and a ranking view. Everything runs locally so you can show the client the whole gamification flow.</p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr;gap:16px;align-items:start;">
+  <div style="display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start;">
+
+  <!-- LEFT: GAME PANEL -->
+  <div id="game-panel" style="background:var(--bg3);border:1px solid var(--dim);border-radius:12px;padding:24px;min-height:520px;">
+
+    <!-- Panel header -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;">
+      <div>
+        <div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:4px;" id="game-title-lbl">Four Planets / Live Game</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);background:var(--bg4);padding:3px 10px;border-radius:20px;display:inline-block;" id="demo-mode-lbl">Tryb demonstracyjny</div>
+      </div>
+      <div id="planet-badge" style="font-family:'Share Tech Mono',monospace;font-size:10px;padding:5px 14px;border-radius:20px;border:1px solid var(--nova);color:var(--nova);display:flex;align-items:center;gap:6px;">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--nova);"></div>
+        <span>Energy</span>
+      </div>
+    </div>
+
+    <!-- View tabs -->
+    <div style="display:flex;gap:8px;margin-bottom:18px;">
+      <button onclick="switchView('start')" id="tab-start" class="gtab active">Start</button>
+      <button onclick="switchView('game')"  id="tab-game"  class="gtab">Game</button>
+      <button onclick="switchView('rank')"  id="tab-rank"  class="gtab">Ranking</button>
+    </div>
+
+    <!-- Meta row -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
+      <div class="gmeta" id="meta-country">Kraj: <strong>PL</strong></div>
+      <div class="gmeta" id="meta-pool">Pula punktów: <strong>100</strong></div>
+      <div class="gmeta" id="meta-mode">Tryb: <strong>Familiada Live</strong></div>
+    </div>
+
+    <!-- ── START VIEW ── -->
+    <div id="view-start">
+      <div style="text-align:center;padding:20px 0 16px;">
+        <div style="font-family:'Orbitron',monospace;font-size:32px;font-weight:900;color:var(--nova);margin-bottom:4px;">NOVA</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--muted);margin-bottom:20px;">WARSZAWA · PL · FAMILIADA LIVE</div>
+      </div>
+
+      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--muted);margin-bottom:10px;" id="select-label">WYBIERZ PYTANIA DO GRY</div>
+      <div id="question-selector" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;"></div>
+
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <button id="start-btn" onclick="startWithSelected()" style="font-family:'Orbitron',monospace;font-size:12px;font-weight:700;letter-spacing:2px;background:var(--nova);color:#fff;border:none;padding:12px 28px;border-radius:6px;cursor:pointer;flex-shrink:0;">ROZPOCZNIJ GRĘ</button>
+        <div id="selected-count" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);"></div>
+      </div>
+
+      <div style="font-size:12px;font-weight:300;color:var(--muted);margin-top:14px;line-height:1.6;" id="start-desc-txt">Gra zaraz się rozpocznie. Odpowiadaj na pytania i zbieraj punkty. Najpopularniejsza odpowiedź = maksimum punktów.</div>
+    </div>
+
+    <!-- ── GAME VIEW ── -->
+    <div id="view-game" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);" id="q-label">Question 1/5</div>
+        <div style="font-family:'Orbitron',monospace;font-size:28px;font-weight:900;color:var(--nova);" id="timer-display">0:30</div>
+      </div>
+      <div style="font-size:17px;font-weight:600;color:#fff;margin-bottom:20px;line-height:1.4;" id="question-text">What would people most often take on an interplanetary trip?</div>
+
+      <!-- Answer tiles -->
+      <div id="tiles-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;"></div>
+
+      <!-- Input -->
+      <div style="display:flex;gap:8px;">
+        <input id="answer-input" type="text" placeholder="Wpisz odpowiedź..." style="flex:1;background:var(--bg4);border:1px solid var(--dim);color:var(--text);padding:11px 14px;border-radius:6px;font-family:'Exo 2',sans-serif;font-size:13px;outline:none;" onkeydown="if(event.key==='Enter')checkAnswer()"/>
+        <button id="check-btn" onclick="checkAnswer()" style="background:var(--bg4);border:1px solid var(--dim);color:var(--text);padding:11px 20px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:11px;cursor:pointer;white-space:nowrap;">Sprawdź</button>
+      </div>
+      <div id="answer-feedback" style="margin-top:10px;font-size:13px;min-height:20px;"></div>
+    </div>
+
+    <!-- ── RANKING VIEW ── -->
+    <div id="view-rank" style="display:none;">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--muted);margin-bottom:14px;display:flex;justify-content:space-between;">
+        <span id="lb-label">GALAKTYCZNY RANKING</span>
+        <span style="color:#44ff99;display:flex;align-items:center;gap:5px;"><span style="width:5px;height:5px;border-radius:50%;background:#44ff99;display:inline-block;animation:blink 1.4s infinite;"></span>LIVE</span>
+      </div>
+      <div id="rank-rows"></div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: INFO PANEL -->
+  <div style="background:var(--bg3);border:1px solid var(--dim);border-radius:12px;padding:24px;">
+    <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--muted);margin-bottom:8px;" id="score-label">WYNIK RUNDY</div>
+    <div style="font-family:'Orbitron',monospace;font-size:52px;font-weight:900;color:#fff;line-height:1;margin-bottom:18px;" id="round-score">0</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--muted);margin-bottom:10px;" id="strikes-label">SKUCHY</div>
+    <div style="display:flex;gap:8px;margin-bottom:20px;" id="strikes-display">
+      <div class="strike-box empty">✕</div>
+      <div class="strike-box empty">✕</div>
+      <div class="strike-box empty">✕</div>
+    </div>
+
+    <div style="font-size:13px;font-weight:300;color:var(--muted);line-height:1.65;margin-bottom:16px;" id="info-text-1">Poprawna odpowiedź odkrywa kafelek i dodaje punkty zależnie od popularności. Błędna odpowiedź = skucha. Po 3 skuchach runda się kończy.</div>
+    <div style="font-size:13px;font-weight:300;color:var(--muted);line-height:1.65;" id="info-text-2">Ten widok pokazuje klientowi realistyczny flow: start, rozgrywka i końcowy ranking.</div>
+  </div>
+
+  </div><!-- /inner grid -->
+  </div><!-- /outer grid -->
+</section>
+
+<style>
+.gtab{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;background:var(--bg4);border:1px solid var(--dim);color:var(--muted);padding:7px 16px;border-radius:6px;cursor:pointer;transition:all .2s;}
+.gtab.active,.gtab:hover{background:var(--bg2);border-color:rgba(180,205,255,.3);color:#fff;}
+.gmeta{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);background:var(--bg4);padding:5px 12px;border-radius:20px;border:1px solid var(--dim);}
+.gmeta strong{color:var(--text);}
+.tile{background:var(--bg4);border:1px solid var(--dim);border-radius:8px;padding:14px;display:flex;justify-content:space-between;align-items:center;min-height:56px;}
+.tile.revealed{border-color:var(--nexus);background:rgba(170,68,255,.08);}
+.tile.hidden{opacity:.7;}
+.tile-ans{font-size:14px;font-weight:500;color:#fff;}
+.tile-pts{font-family:'Orbitron',monospace;font-size:20px;font-weight:700;color:var(--nexus);}
+.tile-q{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;color:var(--muted);}
+.tile-qmark{font-family:'Orbitron',monospace;font-size:24px;color:var(--nexus);}
+.strike-box{width:36px;height:36px;border:1px solid rgba(255,80,80,.4);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:rgba(255,80,80,.3);}
+.strike-box.hit{border-color:var(--nova);background:rgba(255,51,85,.15);color:var(--nova);}
+.strike-box.empty{border-color:var(--dim);color:var(--dim);}
+.rank-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg4);border:1px solid var(--dim);border-radius:8px;margin-bottom:8px;}
+.rank-medal{font-size:16px;width:24px;text-align:center;}
+.rank-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.rank-name{font-size:14px;font-weight:600;color:#fff;flex:1;}
+.rank-planet{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;}
+.rank-score{font-family:'Orbitron',monospace;font-size:16px;font-weight:700;color:#fff;margin-left:8px;}
+</style>
+<footer style="position:relative;z-index:2;border-top:1px solid rgba(255,255,255,0.06);padding:64px 40px;text-align:center;">
+  <div style="font-family:'Orbitron',monospace;font-size:clamp(36px,6vw,72px);font-weight:900;letter-spacing:6px;background:linear-gradient(90deg,var(--nova),var(--nexus),var(--aurum));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:16px;">THE PORTAL</div>
+  <div style="font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:5px;color:var(--muted);">4 WORLDS &nbsp;·&nbsp; WARSZAWA &nbsp;·&nbsp; PRAGA &nbsp;·&nbsp; BUDAPESZT &nbsp;·&nbsp; KIJÓW</div>
+</footer>
+
+<script>
+// ── STARFIELD ──
+const canvas=document.getElementById('bg-canvas'),ctx=canvas.getContext('2d');let stars=[];
+function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+function init(){stars=[];for(let i=0;i<220;i++)stars.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,r:Math.random()*1.3+.2,a:Math.random()*.65+.1,s:Math.random()*.004+.001,p:Math.random()*Math.PI*2});}
+function draw(t){ctx.clearRect(0,0,canvas.width,canvas.height);for(const s of stars){const a=s.a*(.5+.5*Math.sin(t*s.s*60+s.p));ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(180,210,255,${a.toFixed(2)})`;ctx.fill();if(s.r>1.1){const la=.18*(.5+.5*Math.sin(t*s.s*60+s.p));ctx.strokeStyle=`rgba(200,225,255,${la.toFixed(2)})`;ctx.lineWidth=.35;ctx.beginPath();ctx.moveTo(s.x-s.r*4,s.y);ctx.lineTo(s.x+s.r*4,s.y);ctx.moveTo(s.x,s.y-s.r*4);ctx.lineTo(s.x,s.y+s.r*4);ctx.stroke();}}}
+function loop(t){draw(t/1000);requestAnimationFrame(loop);}
+resize();init();window.addEventListener('resize',()=>{resize();init();});requestAnimationFrame(loop);
+
+// ── LANGUAGE ──
+let lang = 'pl';
+const T = {
+  pl: {
+    demoTitle: 'Panel który wygląda jak prawdziwa apka eventowa',
+    demoSub: 'Trzy widoki: ekran startowy, plansza gry w stylu TV i ranking. Wszystko działa lokalnie — możesz pokazać klientowi cały flow gamifikacji.',
+    startDesc: 'Gra zaraz się rozpocznie. Odpowiadaj na pytania i zbieraj punkty. Najpopularniejsza odpowiedź = maksimum punktów.',
+    startBtn: 'ROZPOCZNIJ GRĘ',
+    info1: 'Poprawna odpowiedź odkrywa kafelek i dodaje punkty zależnie od popularności. Błędna odpowiedź = skucha. Po 3 skuchach runda się kończy.',
+    info2: 'Ten widok pokazuje klientowi realistyczny flow: start, rozgrywka i końcowy ranking.',
+    navLang: 'EN',
+    roundScore: 'WYNIK RUNDY',
+    strikes: 'SKUCHY',
+    hiddenAnswer: 'UKRYTA ODPOWIEDŹ',
+    placeholder: 'Wpisz odpowiedź...',
+    checkBtn: 'Sprawdź',
+    questionLabel: (n, t) => `Pytanie ${n}/${t}`,
+    strikeMsg: 'Skucha! ✕',
+    leaderboard: 'GALAKTYCZNY RANKING',
+    pointsPool: 'Pula punktów: 100',
+    mode: 'Tryb: Familiada Live',
+    country: 'Kraj: PL',
+    demoMode: 'Tryb demonstracyjny',
+    gameTitle: 'Four Planets / Live Game',
+  },
+  en: {
+    demoTitle: 'A panel that feels like a real event app',
+    demoSub: 'This section has 3 views: a start screen, a TV-style game board, and a ranking view. Everything runs locally so you can show the client the whole gamification flow.',
+    startDesc: 'The game is about to begin. Answer each question and collect points. The most popular answer = maximum points.',
+    startBtn: 'START GAME',
+    info1: 'A correct answer reveals a tile and adds points based on answer popularity in the survey. A wrong answer adds a strike. After 3 strikes, the round ends.',
+    info2: 'This view shows the client a realistic flow: start of the experience, gameplay, and the final outcome as a ranking.',
+    navLang: 'PL',
+    roundScore: 'ROUND SCORE',
+    strikes: 'STRIKES',
+    hiddenAnswer: 'HIDDEN ANSWER',
+    placeholder: 'Type your answer...',
+    checkBtn: 'Check',
+    questionLabel: (n, t) => `Question ${n}/${t}`,
+    strikeMsg: 'Strike! ✕',
+    leaderboard: 'GALACTIC LEADERBOARD',
+    pointsPool: 'Points pool: 100',
+    mode: 'Mode: Family Feud Live',
+    country: 'Country: PL',
+    demoMode: 'Demonstration mode',
+    gameTitle: 'Four Planets / Live Game',
+  }
+};
+
+const questionsData = {
+  pl: [
+    { text: 'Co ludzie najczęściej zabraliby w podróż międzyplanetarną?', answers: [{a:'telefon',pts:28},{a:'przekąski',pts:23},{a:'muzyka',pts:20},{a:'poduszka',pts:15},{a:'zdjęcia',pts:14}] },
+    { text: 'Co robisz każdego ranka bez zastanowienia?', answers: [{a:'kawa',pts:35},{a:'prysznic',pts:28},{a:'telefon',pts:22},{a:'mycie zębów',pts:10},{a:'ćwiczenia',pts:5}] },
+    { text: 'Co byś zabrał jako pierwsze przy pożarze?', answers: [{a:'telefon',pts:40},{a:'paszport',pts:28},{a:'portfel',pts:18},{a:'laptop',pts:9},{a:'klucze',pts:5}] },
+    { text: 'Podaj rzecz, bez której nie wyobrażasz sobie pracy zdalnej.', answers: [{a:'internet',pts:45},{a:'kawa',pts:30},{a:'laptop',pts:15},{a:'słuchawki',pts:7},{a:'cisza',pts:3}] },
+    { text: 'Co Polacy jedzą najchętniej na imprezie firmowej?', answers: [{a:'pizza',pts:38},{a:'kanapki',pts:25},{a:'sushi',pts:18},{a:'pierogi',pts:12},{a:'sałatka',pts:7}] },
+    { text: 'Jakie słowo najczęściej pada na spotkaniu w Teams?', answers: [{a:'okej',pts:35},{a:'słyszysz mnie',pts:27},{a:'zaraz',pts:20},{a:'mam pytanie',pts:12},{a:'wycisz się',pts:6}] },
+  ],
+  en: [
+    { text: 'What would people most often take on an interplanetary trip?', answers: [{a:'phone',pts:28},{a:'snacks',pts:23},{a:'music',pts:20},{a:'pillow',pts:15},{a:'photos',pts:14}] },
+    { text: 'Name something you do every morning without thinking.', answers: [{a:'coffee',pts:35},{a:'shower',pts:28},{a:'phone',pts:22},{a:'brush teeth',pts:10},{a:'exercise',pts:5}] },
+    { text: 'What would you grab first in a fire?', answers: [{a:'phone',pts:40},{a:'passport',pts:28},{a:'wallet',pts:18},{a:'laptop',pts:9},{a:'keys',pts:5}] },
+    { text: 'Name something you cannot imagine working remotely without.', answers: [{a:'internet',pts:45},{a:'coffee',pts:30},{a:'laptop',pts:15},{a:'headphones',pts:7},{a:'silence',pts:3}] },
+    { text: 'What do people eat most at a work party?', answers: [{a:'pizza',pts:38},{a:'sandwiches',pts:25},{a:'sushi',pts:18},{a:'chips',pts:12},{a:'salad',pts:7}] },
+    { text: 'What word is said most often in a Teams call?', answers: [{a:'okay',pts:35},{a:'can you hear me',pts:27},{a:'just a sec',pts:20},{a:'good point',pts:12},{a:'mute yourself',pts:6}] },
+  ]
+};
+
+// ── FULL PAGE TRANSLATIONS ──
+const PAGE_T = {
+  pl: {
+    'nav.planets':'Planety','nav.game':'Gra','nav.app':'App','nav.portal':'Portal','nav.timeline':'Timeline',
+    'hero.eyebrow':'INTERGALACTIC EVENT CONCEPT',
+    'planets.eyebrow':'// 01 — PLANETARY SYSTEM','planets.title':'Cztery planety, cztery tożsamości','planets.sub':'Każde miasto to osobny świat z własnym klimatem i estetyką. Planeta to Twoja identyfikacja w apce — kolor, nazwa, przynależność. Nie drużyna, nie przewaga. Tylko skąd jesteś.',
+    'nova.desc':'Czerwona planeta ognia i ambicji. Energia, impet, duch lidera. Obsługa w czerwono-czarnych strojach astronautów.','nova.t1':'Ogień','nova.t2':'Ambicja','nova.t3':'Czerwień',
+    'nexus.desc':'Fioletowa planeta tajemnic. Mystyczne wibracje, stare energie nowego świata. Obsługa w głębokiej purpurze ze złotymi detalami.','nexus.t1':'Tajemnica','nexus.t2':'Fiolet','nexus.t3':'Głębia',
+    'aurum.desc':'Złota planeta przepychu i ciepła. Termalne energie, prestiż i dawna świetność w nowym wymiarze. Obsługa w złoto-brązowych strojach.','aurum.t1':'Złoto','aurum.t2':'Przepych','aurum.t3':'Ciepło',
+    'solaris.desc':'Niebiesko-złota planeta słońca i nieugiętej siły. Elektryczna energia i duch odrodzenia. Obsługa w głębokim błękicie ze złotem.','solaris.t1':'Energia','solaris.t2':'Siła','solaris.t3':'Błękit',
+    'game.eyebrow':'// 02 — THE GAME','game.title':'Większość powie...','game.sub':'Nie ma jednej dobrej odpowiedzi. Wygrywasz gdy myślisz tak jak większość. Proste, szybkie, zaskakujące — i zawsze inne gdy grasz z czterema krajami naraz.',
+    'game.s1t':'Pytanie pojawia się w apce','game.s1d':'Mission Control wysyła pytanie do wszystkich uczestników w 4 miastach jednocześnie. Odlicza czas — zazwyczaj 20–30 sekund. Pytania bez jednej prawidłowej odpowiedzi: wolne skojarzenia, "co byś wybrał", "pierwsze co przychodzi do głowy".',
+    'game.s2t':'Każdy wpisuje lub wybiera odpowiedź','game.s2d':'Albo wpisz własną odpowiedź (open text), albo wybierz z kilku opcji (multiple choice). Format dobierany do pytania. Liczysz tylko na siebie — Twoja odpowiedź, Twoje punkty.',
+    'game.s3t':'Reveal — co powiedziała większość?','game.s3d':'To jest ten moment. Wyniki pojawiają się na ekranach i na portalach. Widać jak głosowały poszczególne miasta. Warszawa powiedziała co innego niż Kijów. Naturalny śmiech, rozmowy, reakcje na portalach — bez żadnej dodatkowej mechaniki.',
+    'game.s4t':'Punkty trafiają na Twój profil','game.s4d':'Im więcej osób powiedziało to samo co Ty — tym więcej punktów. Odpowiedź najpopularniejsza = max punkty. Prędkość odpowiedzi jako tiebreaker. Leaderboard aktualizuje się na żywo.',
+    'qex.l1':'PRZYKŁAD — KULTUROWE','qex.q1':'"Pierwsze europejskie miasto które przychodzi Ci do głowy"','qex.a1.1':'Paryż','qex.a1.2':'Rzym','qex.a1.3':'Berlin',
+    'qex.l2':'PRZYKŁAD — ABSURDALNE','qex.q2':'"Co zabrałbyś z Ziemi gdybyś był kosmitą?"','qex.a2.1':'Pizzę','qex.a2.3':'Kota',
+    'qex.l3':'PRZYKŁAD — MIĘDZY KRAJAMI','qex.q3':'"Najlepsze jedzenie na imprezę"','qex.a3.2':'Burgery',
+    'pts.l1':'Trafiłeś w najpopularniejszą odpowiedź','pts.l2':'Trafiłeś w drugą najpopularniejszą','pts.l3':'Bonus za szybkość odpowiedzi',
+    'app.eyebrow':'// 03 — MOBILE APP','app.title':'Twój profil, Twoje punkty','app.sub':'Jedna apka, cztery kolory planet. Każdy uczestnik ma własny profil z historią odpowiedzi i aktualnym wynikiem. Zero pobierania — wejście przez QR kod.',
+    'app.feats.title':'Co zawiera apka',
+    'app.f1t':'Profil uczestnika','app.f1d':'Imię, planeta, aktualny wynik, historia odpowiedzi. Każdy widzi swój postęp przez całą noc.',
+    'app.f2t':'Pytanie live','app.f2d':'Gdy Mission Control startuje rundę, pytanie pojawia się natychmiast z odliczaniem. Jeden tap lub wpisanie odpowiedzi.',
+    'app.f3t':'Reveal — wyniki rundy','app.f3d':'Po każdym pytaniu widać jak odpowiedziały wszystkie miasta. Tu zaczyna się rozmowa i śmiech.',
+    'app.f4d':'Top 20 uczestników ze wszystkich 4 miast. Aktualizuje się po każdej rundzie. Widoczny też na portalach.',
+    'app.f5t':'Agenda eventu','app.f5d':'Plan nocy jako Mission Log. Godziny, aktywności, informacje praktyczne — wszystko w jednym miejscu.',
+    'app.tech':'<strong>Tech:</strong> PWA — wejście przez QR kod, zero instalacji. Realtime przez WebSockets. Jeden backend, 4 tematy kolorystyczne per planeta.',
+    'lb.eyebrow':'// 04 — NAGRODY','lb.title':'Galactic Leaderboard','lb.sub':'Jeden ranking, cztery planety. Wygrywają osoby, nie miasta. Na końcu nocy top gracze dostają nagrody — bez względu na to skąd są.','lb.hdr':'TOP GALACTIC PLAYERS',
+    'lb.rew.title':'NAGRODY KOŃCOWE','lb.rew.desc':'Top gracze z całego leaderboardu — bez podziału na miasta — otrzymują nagrody/upominki na koniec eventu. Wyniki ogłasza Mission Control na wszystkich 4 portalach jednocześnie.',
+    'portal.eyebrow':'// 05 — PORTAL SYSTEM','portal.title':'Okno między planetami','portal.status':'WORMHOLE ACTIVE',
+    'portal.pi.title':'Zawsze włączony,<br>przez całą noc',
+    'portal.pi.b1':'Fizyczna instalacja — okrągły lub prostokątny ekran z kamerą skierowaną na tłum. Stały live stream między wszystkimi 4 miastami. <strong>Nie ma przełączania, nie ma schowania.</strong> Jak te portale między Lublinem a Wilnem — po prostu jest i działa.',
+    'portal.pi.b2':'Uczestnicy podchodzą, machają, widzą ludzi z innych planet w czasie rzeczywistym. Nikt tego nie moderuje. To się dzieje samo. Gdy po rundzie pojawia się reveal z wynikami — każde miasto widzi jak zareagowały inne.',
+    'portal.pi.setup':'<strong>Setup:</strong> min. 65" ekran per miasto, kamera szerokokątna, dedykowany stream. Stylizacja jako wormhole — rama, efekty świetlne, kosmiczny klimat. Słuchawki z mikrofonem dla chętnych do rozmowy.',
+    'tl.eyebrow':'// 06 — MISSION TIMELINE','tl.title':'Scenariusz nocy',
+    'tl.t1':'Portale aktywne','tl.d1':'Uczestnicy wchodzą i skanują QR kod na wejściu. Rejestracja w apce, wybór nicku, planeta przypisana automatycznie po lokalizacji. Ekrany-portale już nadają live z innych miast.',
+    'tl.t2':'Mission Control — start galaktyki','tl.d2':'Oficjalne otwarcie. Głos z kadru, na portalach pojawia się mapa 4 planet. Krótkie intro — kim jesteście, skąd jesteście, na czym polega gra.',
+    'tl.t3':'Runda rozgrzewkowa — 3 pytania','tl.d3':'Łatwe pytania, żeby wszyscy zrozumieli mechanikę. Wyniki nie liczą się do rankingu. Po każdym pytaniu reveal z podziałem na miasta — pierwsze "och!" gdy widać różnice między Warszawą a Kijowem.',
+    'tl.t4':'Blok 1 — pytania właściwe','tl.d4':'8–10 pytań. Mix kulturowych, absurdalnych, firmowych. Leaderboard na portalu aktualizuje się na żywo. Pierwsze gwiazdy rankingu zaczynają odskakiwać.',
+    'tl.t5':'Przerwa — wyniki połowy','tl.d5':'Mission Control ogłasza top 5 po połowie gry. Dobry moment na kontakt przez portal — każde miasto widzi kto prowadzi u pozostałych.',
+    'tl.t6':'Blok 2 — podwójne punkty','tl.d6':'Ostatnie 8 pytań z podwójną stawką. Trudniejsze, bardziej prowokacyjne. Ranking może się całkowicie odwrócić. Napięcie buduje się naturalnie.',
+    'tl.t7':'Finał — ogłoszenie zwycięzców','tl.d7':'Mission Control ogłasza wyniki na wszystkich 4 portalach jednocześnie. Wręczenie nagród lokalnie w każdym mieście. Zwycięzcy widoczni na ekranach całej galaktyki.',
+  },
+  en: {
+    'nav.planets':'Planets','nav.game':'Game','nav.app':'App','nav.portal':'Portal','nav.timeline':'Timeline',
+    'hero.eyebrow':'INTERGALACTIC EVENT CONCEPT',
+    'planets.eyebrow':'// 01 — PLANETARY SYSTEM','planets.title':'Four planets, four identities','planets.sub':'Each city is its own world with a unique climate and aesthetic. Your planet is your identity in the app — colour, name, belonging. Not a team, not an advantage. Just where you\'re from.',
+    'nova.desc':'The red planet of fire and ambition. Energy, drive, the spirit of a leader. Staff dressed in red-and-black astronaut suits.','nova.t1':'Fire','nova.t2':'Ambition','nova.t3':'Red',
+    'nexus.desc':'The purple planet of mystery. Mystic vibrations, ancient energies of a new world. Staff in deep purple with gold details.','nexus.t1':'Mystery','nexus.t2':'Purple','nexus.t3':'Depth',
+    'aurum.desc':'The golden planet of luxury and warmth. Thermal energy, prestige and past glory in a new dimension. Staff in gold-brown suits.','aurum.t1':'Gold','aurum.t2':'Luxury','aurum.t3':'Warmth',
+    'solaris.desc':'The blue-gold planet of sun and unyielding strength. Electric energy and the spirit of renewal. Staff in deep blue with gold accents.','solaris.t1':'Energy','solaris.t2':'Strength','solaris.t3':'Blue',
+    'game.eyebrow':'// 02 — THE GAME','game.title':'What would most people say...','game.sub':'There\'s no single right answer. You win by thinking like the majority. Simple, fast, surprising — and always different when you play across four countries at once.',
+    'game.s1t':'The question appears in the app','game.s1d':'Mission Control sends the question to all participants in 4 cities simultaneously. A countdown begins — usually 20–30 seconds. Questions with no single correct answer: free associations, "what would you choose", "first thing that comes to mind".',
+    'game.s2t':'Everyone types or selects an answer','game.s2d':'Either type your own answer (open text) or choose from a few options (multiple choice). Format chosen to fit the question. It\'s all on you — your answer, your points.',
+    'game.s3t':'Reveal — what did the majority say?','game.s3d':'This is the moment. Results appear on screens and portals. You can see how each city voted. Warsaw said something different than Kyiv. Natural laughter, conversations, reactions on the portals — no extra mechanics needed.',
+    'game.s4t':'Points land on your profile','game.s4d':'The more people said the same as you — the more points. The most popular answer = max points. Answer speed as a tiebreaker. The leaderboard updates live.',
+    'qex.l1':'EXAMPLE — CULTURAL','qex.q1':'"First European city that comes to mind"','qex.a1.1':'Paris','qex.a1.2':'Rome','qex.a1.3':'Berlin',
+    'qex.l2':'EXAMPLE — ABSURD','qex.q2':'"What would you take from Earth if you were an alien?"','qex.a2.1':'Pizza','qex.a2.3':'A cat',
+    'qex.l3':'EXAMPLE — CROSS-COUNTRY','qex.q3':'"Best food at a party"','qex.a3.2':'Burgers',
+    'pts.l1':'You matched the most popular answer','pts.l2':'You matched the second most popular','pts.l3':'Bonus for answering quickly',
+    'app.eyebrow':'// 03 — MOBILE APP','app.title':'Your profile, your points','app.sub':'One app, four planet colour schemes. Every participant has their own profile with answer history and current score. Zero downloads — entry via QR code.',
+    'app.feats.title':'What the app includes',
+    'app.f1t':'Participant profile','app.f1d':'Name, planet, current score, answer history. Everyone can track their progress throughout the night.',
+    'app.f2t':'Live question','app.f2d':'When Mission Control starts a round, the question appears instantly with a countdown. One tap or type your answer.',
+    'app.f3t':'Reveal — round results','app.f3d':'After each question you can see how all cities answered. That\'s where the laughter and conversations start.',
+    'app.f4d':'Top 20 participants from all 4 cities. Updates after every round. Also visible on the portals.',
+    'app.f5t':'Event agenda','app.f5d':'The night\'s schedule as a Mission Log. Times, activities, practical info — all in one place.',
+    'app.tech':'<strong>Tech:</strong> PWA — entry via QR code, zero installation. Realtime via WebSockets. One backend, 4 colour themes per planet.',
+    'lb.eyebrow':'// 04 — REWARDS','lb.title':'Galactic Leaderboard','lb.sub':'One ranking, four planets. Individuals win, not cities. At the end of the night, top players receive prizes — regardless of where they\'re from.','lb.hdr':'TOP GALACTIC PLAYERS',
+    'lb.rew.title':'FINAL PRIZES','lb.rew.desc':'Top players from the entire leaderboard — with no city split — receive prizes/gifts at the end of the event. Results announced by Mission Control on all 4 portals simultaneously.',
+    'portal.eyebrow':'// 05 — PORTAL SYSTEM','portal.title':'Window between planets','portal.status':'WORMHOLE ACTIVE',
+    'portal.pi.title':'Always on,<br>all night long',
+    'portal.pi.b1':'A physical installation — a round or rectangular screen with a camera pointed at the crowd. Constant live stream between all 4 cities. <strong>No switching, no hiding.</strong> Like those portals between cities — it just exists and works.',
+    'portal.pi.b2':'Participants walk up, wave, see people from other planets in real time. Nobody moderates it. It happens by itself. When the reveal shows results after a round — every city sees how the others reacted.',
+    'portal.pi.setup':'<strong>Setup:</strong> min. 65" screen per city, wide-angle camera, dedicated stream. Styled as a wormhole — frame, light effects, cosmic vibe. Headphones with mic for those who want to talk.',
+    'tl.eyebrow':'// 06 — MISSION TIMELINE','tl.title':'Night scenario',
+    'tl.t1':'Portals active','tl.d1':'Participants enter and scan the QR code. Registration in the app, choosing a nickname, planet assigned automatically by location. Portal screens already streaming live from other cities.',
+    'tl.t2':'Mission Control — galaxy launch','tl.d2':'Official opening. Voice-over, a map of 4 planets appears on the portals. Short intro — who you are, where you\'re from, how the game works.',
+    'tl.t3':'Warm-up round — 3 questions','tl.d3':'Easy questions so everyone understands the mechanics. Results don\'t count toward the ranking. After each question a reveal with city breakdown — the first "wow" moment when you see the differences between Warsaw and Kyiv.',
+    'tl.t4':'Block 1 — proper questions','tl.d4':'8–10 questions. Mix of cultural, absurd and company-themed. Leaderboard on the portal updates live. Top players start pulling ahead.',
+    'tl.t5':'Halftime — mid-game results','tl.d5':'Mission Control announces top 5 at the halfway point. Great moment for portal contact — every city sees who\'s leading at the others.',
+    'tl.t6':'Block 2 — double points','tl.d6':'Last 8 questions with double stakes. Harder, more provocative. The ranking can completely flip. Tension builds naturally.',
+    'tl.t7':'Final — winners announced','tl.d7':'Mission Control announces results on all 4 portals simultaneously. Prizes awarded locally in each city. Winners visible on screens across the galaxy.',
+  }
+};
+
+function applyLang(l) {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (PAGE_T[l] && PAGE_T[l][key] !== undefined) {
+      el.innerHTML = PAGE_T[l][key];
+    }
+  });
+}
+
+function setLang(l) {
+  lang = l;
+  const t = T[l];
+  // section texts
+  document.getElementById('demo-title').textContent = t.demoTitle;
+  document.getElementById('demo-sub').textContent = t.demoSub;
+  document.getElementById('start-desc-txt').textContent = t.startDesc;
+  document.getElementById('start-btn').textContent = t.startBtn;
+  document.getElementById('info-text-1').textContent = t.info1;
+  document.getElementById('info-text-2').textContent = t.info2;
+  document.getElementById('lang-btn').textContent = t.navLang;
+  // apply all page translations
+  applyLang(l);
+  const sl = document.getElementById('select-label');
+  if (sl) sl.textContent = l === 'pl' ? 'WYBIERZ PYTANIA DO GRY' : 'SELECT QUESTIONS';
+  // leaderboard label
+  const lbl = document.getElementById('lb-label');
+  if (lbl) lbl.textContent = t.leaderboard;
+  // panel UI
+  document.getElementById('score-label').textContent = t.roundScore;
+  document.getElementById('strikes-label').textContent = t.strikes;
+  document.getElementById('meta-country').innerHTML = t.country;
+  document.getElementById('meta-pool').innerHTML = t.pointsPool;
+  document.getElementById('meta-mode').innerHTML = t.mode;
+  document.getElementById('demo-mode-lbl').textContent = t.demoMode;
+  document.getElementById('game-title-lbl').textContent = t.gameTitle;
+  document.getElementById('answer-input').placeholder = t.placeholder;
+  document.getElementById('check-btn').textContent = t.checkBtn;
+  // rebuild selector on lang change
+  buildSelector();
+  // rebuild current view content
+  const activeView = document.querySelector('[id^="view-"]:not([style*="none"])');
+  if (activeView && activeView.id === 'view-game') buildTiles();
+}
+
+let currentQ = 0, strikes = 0, score = 0, timer = 30, timerInterval = null;
+let revealed = [];
+
+function buildTiles() {
+  const q = selectedQuestions[currentQ];
+  revealed = new Array(q.answers.length).fill(false);
+  const grid = document.getElementById('tiles-grid');
+  grid.innerHTML = '';
+  q.answers.forEach((ans, i) => {
+    const tile = document.createElement('div');
+    tile.className = 'tile hidden';
+    tile.id = 'tile-' + i;
+    tile.innerHTML = `<span class="tile-q">${T[lang].hiddenAnswer}</span><span class="tile-qmark">?</span>`;
+    grid.appendChild(tile);
+  });
+  document.getElementById('q-label').textContent = T[lang].questionLabel(currentQ+1, selectedQuestions.length);
+  document.getElementById('question-text').textContent = q.text;
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  timer = 300;
+  updateTimerDisplay();
+  timerInterval = setInterval(() => {
+    timer--;
+    updateTimerDisplay();
+    if (timer <= 0) { clearInterval(timerInterval); endRound(); }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const el = document.getElementById('timer-display');
+  const m = Math.floor(timer / 60);
+  const s = (timer % 60).toString().padStart(2,'0');
+  el.textContent = `${m}:${s}`;
+  el.style.color = timer <= 30 ? 'var(--nova)' : 'var(--aurum)';
+}
+
+function checkAnswer() {
+  const input = document.getElementById('answer-input');
+  const val = input.value.trim().toLowerCase();
+  if (!val) return;
+  input.value = '';
+  const q = selectedQuestions[currentQ];
+  let matched = false;
+  q.answers.forEach((ans, i) => {
+    if (!revealed[i] && (ans.a.toLowerCase().includes(val) || val.includes(ans.a.toLowerCase()))) {
+      revealed[i] = true;
+      score += ans.pts;
+      document.getElementById('round-score').textContent = score;
+      const tile = document.getElementById('tile-' + i);
+      tile.className = 'tile revealed';
+      tile.innerHTML = `<span class="tile-ans">${ans.a}</span><span class="tile-pts">${ans.pts}</span>`;
+      matched = true;
+      showFeedback(`+${ans.pts} pts — "${ans.a}"`, 'var(--nexus)');
+    }
+  });
+  if (!matched) {
+    strikes++;
+    updateStrikes();
+    showFeedback(T[lang].strikeMsg, 'var(--nova)');
+    if (strikes >= 3) { setTimeout(endRound, 600); }
+  }
+  if (revealed.every(Boolean)) { setTimeout(nextQuestion, 800); }
+}
+
+function showFeedback(msg, color) {
+  const el = document.getElementById('answer-feedback');
+  el.textContent = msg;
+  el.style.color = color;
+  setTimeout(() => { el.textContent = ''; }, 1800);
+}
+
+function updateStrikes() {
+  const boxes = document.querySelectorAll('.strike-box');
+  boxes.forEach((b, i) => {
+    b.className = 'strike-box ' + (i < strikes ? 'hit' : 'empty');
+  });
+}
+
+function endRound() {
+  clearInterval(timerInterval);
+  if (currentQ < selectedQuestions.length - 1) { nextQuestion(); }
+  else { switchView('rank'); }
+}
+
+function nextQuestion() {
+  currentQ++;
+  if (currentQ >= selectedQuestions.length) { switchView('rank'); return; }
+  strikes = 0; updateStrikes();
+  buildTiles();
+  startTimer();
+}
+
+let selectedQuestions = [];
+
+function buildSelector() {
+  const all = questionsData[lang];
+  const container = document.getElementById('question-selector');
+  if (!container) return;
+  // preserve previously checked indices
+  const checkedSet = new Set(selectedQuestions.map(q => q._origIndex));
+  container.innerHTML = '';
+  all.forEach((q, i) => {
+    const isChecked = checkedSet.size === 0 ? true : checkedSet.has(i);
+    const row = document.createElement('label');
+    row.style.cssText = 'display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--bg4);border:1px solid var(--dim);border-radius:6px;cursor:pointer;transition:border-color .2s;';
+    row.innerHTML = `
+      <input type="checkbox" data-idx="${i}" ${isChecked?'checked':''} style="margin-top:3px;accent-color:var(--nova);cursor:pointer;flex-shrink:0;">
+      <div>
+        <div style="font-size:13px;font-weight:500;color:#fff;line-height:1.4;">${q.text}</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);margin-top:4px;letter-spacing:1px;">${q.answers.map(a=>a.a).join(' · ')}</div>
+      </div>`;
+    row.querySelector('input').addEventListener('change', updateSelectedCount);
+    container.appendChild(row);
+  });
+  updateSelectedCount();
+}
+
+function updateSelectedCount() {
+  const checked = document.querySelectorAll('#question-selector input[type=checkbox]:checked');
+  const el = document.getElementById('selected-count');
+  if (el) {
+    const n = checked.length;
+    el.textContent = lang === 'pl' ? `Wybrano: ${n} pytań` : `Selected: ${n} questions`;
+  }
+}
+
+function startWithSelected() {
+  const all = questionsData[lang];
+  const checked = document.querySelectorAll('#question-selector input[type=checkbox]:checked');
+  if (checked.length === 0) {
+    const el = document.getElementById('selected-count');
+    if (el) { el.textContent = lang === 'pl' ? '⚠ Wybierz przynajmniej 1 pytanie' : '⚠ Select at least 1 question'; el.style.color='var(--nova)'; }
+    return;
+  }
+  selectedQuestions = Array.from(checked).map(cb => {
+    const idx = parseInt(cb.dataset.idx);
+    return { ...all[idx], _origIndex: idx };
+  });
+  switchView('game');
+}
+
+function buildRanking() {
+  const maxPossible = selectedQuestions.reduce((sum, q) => sum + q.answers.reduce((s, a) => s + a.pts, 0), 0) || 100;
+  const players = [
+    {name:'Katarzyna W.', planet:'AURUM', color:'var(--aurum)', score: Math.round(maxPossible * 0.92)},
+    {name:'Tomáš H.',     planet:'NEXUS', color:'var(--nexus)', score: Math.round(maxPossible * 0.75)},
+    {name:'Ty',           planet:'NOVA',  color:'var(--nova)',  score: score},
+    {name:'Olena K.',     planet:'SOLARIS',color:'var(--solaris)', score: Math.round(maxPossible * 0.48)},
+    {name:'Ádám B.',      planet:'AURUM', color:'var(--aurum)', score: Math.round(maxPossible * 0.31)},
+  ].sort((a,b) => b.score - a.score);
+
+  const container = document.getElementById('rank-rows');
+  container.innerHTML = '';
+  players.forEach((p, i) => {
+    const medal = ['🥇','🥈','🥉','04','05'][i];
+    const row = document.createElement('div');
+    row.className = 'rank-row';
+    row.innerHTML = `<div class="rank-medal">${medal}</div><div class="rank-dot" style="background:${p.color};box-shadow:0 0 6px ${p.color}"></div><div class="rank-name">${p.name}</div><div class="rank-planet" style="color:${p.color}">${p.planet}</div><div class="rank-score">${Math.max(0, p.score)}</div>`;
+    container.appendChild(row);
+  });
+}
+
+// ── VIEW SWITCHER ──
+function switchView(v) {
+  ['start','game','rank'].forEach(n => {
+    document.getElementById('view-'+n).style.display = 'none';
+    document.getElementById('tab-'+n).classList.remove('active');
+  });
+  document.getElementById('view-'+v).style.display = 'block';
+  document.getElementById('tab-'+v).classList.add('active');
+
+  if (v === 'game') {
+    currentQ = 0; strikes = 0; score = 0;
+    document.getElementById('round-score').textContent = '0';
+    updateStrikes();
+    if (selectedQuestions.length === 0) {
+      selectedQuestions = questionsData[lang].map((q,i) => ({...q, _origIndex:i}));
+    }
+    buildTiles();
+    startTimer();
+  }
+  if (v === 'start') {
+    buildSelector();
+  }
+  if (v === 'rank') {
+    clearInterval(timerInterval);
+    buildRanking();
+  }
+}
+
+// ── WORMHOLE ANIMATION ──
+(function() {
+  const wc = document.getElementById('wormhole-canvas');
+  if (!wc) return;
+  const wx = wc.getContext('2d');
+  const W = 300, H = 300, CX = 150, CY = 150;
+
+  // Tunnel particles streaming into center
+  const PARTICLES = [];
+  const PLANET_COLORS = ['#ff3355','#aa44ff','#ffaa22','#22ccff'];
+  const PLANET_SPEEDS = [0.008, 0.006, 0.005, 0.007];
+  const PLANET_RADII  = [72, 98, 118, 135];
+  const PLANET_OFFSETS= [0, 1.2, 2.5, 4.1];
+  let wAngle = 0;
+
+  // Create streaming tunnel particles
+  for (let i = 0; i < 180; i++) {
+    PARTICLES.push({
+      angle: Math.random() * Math.PI * 2,
+      r: Math.random() * 110 + 10,
+      speed: (Math.random() * 0.4 + 0.15) * (Math.random() < 0.5 ? 1 : -1),
+      size: Math.random() * 1.8 + 0.3,
+      alpha: Math.random() * 0.5 + 0.1,
+      colorIdx: Math.floor(Math.random() * 4),
+      drift: (Math.random() - 0.5) * 0.002,
+    });
+  }
+
+  // Wormhole rings data
+  const RINGS = Array.from({length: 12}, (_, i) => ({
+    r: 10 + i * 11,
+    rot: Math.random() * Math.PI * 2,
+    rotSpeed: (Math.random() * 0.003 + 0.001) * (i % 2 === 0 ? 1 : -1),
+    alpha: 0.06 + (1 - i/12) * 0.12,
+    dashes: 6 + i * 2,
+  }));
+
+  function drawWormhole(t) {
+    wx.clearRect(0, 0, W, H);
+
+    // Deep space bg
+    wx.fillStyle = '#06080f';
+    wx.beginPath();
+    wx.arc(CX, CY, 148, 0, Math.PI * 2);
+    wx.fill();
+
+    // Outer glow ring
+    const grd = wx.createRadialGradient(CX, CY, 60, CX, CY, 148);
+    grd.addColorStop(0, 'rgba(80,40,160,0.0)');
+    grd.addColorStop(0.6, 'rgba(80,40,160,0.08)');
+    grd.addColorStop(1, 'rgba(80,40,160,0.25)');
+    wx.fillStyle = grd;
+    wx.beginPath();
+    wx.arc(CX, CY, 148, 0, Math.PI * 2);
+    wx.fill();
+
+    // Spinning dashed rings (tunnel effect)
+    RINGS.forEach(ring => {
+      ring.rot += ring.rotSpeed;
+      wx.save();
+      wx.translate(CX, CY);
+      wx.rotate(ring.rot);
+      wx.strokeStyle = `rgba(100,80,220,${ring.alpha})`;
+      wx.lineWidth = 0.6;
+      const dash = (2 * Math.PI * ring.r) / ring.dashes;
+      wx.setLineDash([dash * 0.4, dash * 0.6]);
+      wx.beginPath();
+      wx.arc(0, 0, ring.r, 0, Math.PI * 2);
+      wx.stroke();
+      wx.setLineDash([]);
+      wx.restore();
+    });
+
+    // Streaming particles
+    PARTICLES.forEach(p => {
+      p.angle += p.drift;
+      p.r -= p.speed * 0.6;
+      if (p.r < 4) {
+        p.r = Math.random() * 80 + 60;
+        p.angle = Math.random() * Math.PI * 2;
+        p.speed = (Math.random() * 0.4 + 0.15) * (Math.random() < 0.5 ? 1 : -1);
+      }
+      const px = CX + Math.cos(p.angle) * p.r;
+      const py = CY + Math.sin(p.angle) * p.r;
+      const fade = Math.min(1, p.r / 80) * p.alpha;
+      wx.beginPath();
+      wx.arc(px, py, p.size, 0, Math.PI * 2);
+      wx.fillStyle = PLANET_COLORS[p.colorIdx].replace(')', `,${fade.toFixed(2)})`).replace('rgb','rgba').replace('#', 'rgba(').replace(/rgba\(([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2}),/, (m,r,g,b) => `rgba(${parseInt(r,16)},${parseInt(g,16)},${parseInt(b,16)},`);
+      // simpler approach:
+      wx.fillStyle = `rgba(${hexToRgb(PLANET_COLORS[p.colorIdx])},${fade.toFixed(2)})`;
+      wx.fill();
+    });
+
+    // Orbiting planets
+    wAngle += 0.004;
+    const planets = [
+      {color:'#ff3355', r:7, orbit:72, speed:1.0, label:'wh-label-nova'},
+      {color:'#aa44ff', r:6, orbit:98, speed:0.7, label:'wh-label-nexus'},
+      {color:'#ffaa22', r:6, orbit:118,speed:0.5, label:'wh-label-aurum'},
+      {color:'#22ccff', r:5, orbit:135,speed:0.35,label:'wh-label-solaris'},
+    ];
+    planets.forEach((p, i) => {
+      const a = wAngle * p.speed + PLANET_OFFSETS[i];
+      const px = CX + Math.cos(a) * p.orbit;
+      const py = CY + Math.sin(a) * p.orbit;
+
+      // Glow
+      const g2 = wx.createRadialGradient(px, py, 0, px, py, p.r * 3);
+      g2.addColorStop(0, p.color + 'aa');
+      g2.addColorStop(1, p.color + '00');
+      wx.fillStyle = g2;
+      wx.beginPath();
+      wx.arc(px, py, p.r * 3, 0, Math.PI * 2);
+      wx.fill();
+
+      // Planet dot
+      wx.beginPath();
+      wx.arc(px, py, p.r, 0, Math.PI * 2);
+      wx.fillStyle = p.color;
+      wx.fill();
+
+      // Update floating label
+      const lbl = document.getElementById(p.label);
+      if (lbl) {
+        lbl.style.left = (px + p.r + 6) + 'px';
+        lbl.style.top  = (py - 5) + 'px';
+        lbl.style.opacity = (Math.cos(a) > 0 ? 0.9 : 0.3).toString();
+      }
+    });
+
+    // Center core — pulsing
+    const pulse = 0.7 + 0.3 * Math.sin(t * 0.003);
+    const core = wx.createRadialGradient(CX, CY, 0, CX, CY, 28 * pulse);
+    core.addColorStop(0, 'rgba(180,140,255,0.9)');
+    core.addColorStop(0.4, 'rgba(80,60,180,0.5)');
+    core.addColorStop(1,   'rgba(20,10,60,0)');
+    wx.fillStyle = core;
+    wx.beginPath();
+    wx.arc(CX, CY, 28 * pulse, 0, Math.PI * 2);
+    wx.fill();
+
+    // LIVE text
+    wx.font = '8px "Share Tech Mono", monospace';
+    wx.textAlign = 'center';
+    wx.fillStyle = `rgba(180,160,255,${0.5 + 0.3 * Math.sin(t * 0.004)})`;
+    wx.letterSpacing = '2px';
+    wx.fillText('LIVE', CX, CY + 3);
+
+    // Outer border ring
+    wx.strokeStyle = 'rgba(255,60,80,0.2)';
+    wx.lineWidth = 1.5;
+    wx.setLineDash([]);
+    wx.beginPath();
+    wx.arc(CX, CY, 146, 0, Math.PI * 2);
+    wx.stroke();
+
+    // Clip to circle
+    wx.save();
+    wx.globalCompositeOperation = 'destination-in';
+    wx.beginPath();
+    wx.arc(CX, CY, 148, 0, Math.PI * 2);
+    wx.fillStyle = '#fff';
+    wx.fill();
+    wx.restore();
+  }
+
+  function hexToRgb(hex) {
+    const r = parseInt(hex.slice(1,3),16);
+    const g = parseInt(hex.slice(3,5),16);
+    const b = parseInt(hex.slice(5,7),16);
+    return `${r},${g},${b}`;
+  }
+
+  function whLoop(t) {
+    drawWormhole(t);
+    requestAnimationFrame(whLoop);
+  }
+  requestAnimationFrame(whLoop);
+})();
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.createElement('button');
+  btn.id = 'lang-btn';
+  btn.textContent = 'EN';
+  btn.style.cssText = 'font-family:"Share Tech Mono",monospace;font-size:10px;letter-spacing:2px;background:transparent;border:1px solid rgba(180,205,255,0.3);color:var(--muted);padding:6px 14px;cursor:pointer;transition:all .2s;';
+  btn.onmouseover = () => { btn.style.color='#fff'; btn.style.borderColor='rgba(180,205,255,.6)'; };
+  btn.onmouseout  = () => { btn.style.color=''; btn.style.borderColor=''; };
+  btn.onclick = () => setLang(lang === 'en' ? 'pl' : 'en');
+  document.querySelector('.nav-links').appendChild(btn);
+  buildSelector();
+  applyLang('pl');
+});
+</script>
+</body>
+</html>

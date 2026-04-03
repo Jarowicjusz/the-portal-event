@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NOVA — Warszawa · The Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Exo+2:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --c:    #ff3355;
+  --c2:   #ff6677;
+  --cdim: rgba(255,51,85,0.15);
+  --cglow:rgba(255,51,85,0.3);
+  --bg:   #0d0406;
+  --bg2:  #160608;
+  --bg3:  #1e090c;
+  --text: #f5dde0;
+  --muted:rgba(245,200,205,0.5);
+  --dim:  rgba(245,200,205,0.1);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Exo 2',sans-serif;font-weight:400;overflow-x:hidden;line-height:1.6;}
+#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
+.scan{position:fixed;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,51,85,0.06),transparent);animation:scan 10s linear infinite;z-index:1;pointer-events:none;}
+@keyframes scan{from{top:0}to{top:100vh}}
+.corner{position:fixed;width:18px;height:18px;z-index:10;pointer-events:none;}
+.c-tl{top:10px;left:10px;border-top:1px solid rgba(255,51,85,0.4);border-left:1px solid rgba(255,51,85,0.4);}
+.c-tr{top:10px;right:10px;border-top:1px solid rgba(255,51,85,0.4);border-right:1px solid rgba(255,51,85,0.4);}
+.c-bl{bottom:10px;left:10px;border-bottom:1px solid rgba(255,51,85,0.4);border-left:1px solid rgba(255,51,85,0.4);}
+.c-br{bottom:10px;right:10px;border-bottom:1px solid rgba(255,51,85,0.4);border-right:1px solid rgba(255,51,85,0.4);}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:12px 32px;display:flex;align-items:center;justify-content:space-between;background:rgba(13,4,6,0.9);border-bottom:1px solid rgba(255,51,85,0.15);backdrop-filter:blur(8px);}
+.nav-back{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:8px;transition:color .2s;}
+.nav-back:hover{color:var(--c);}
+.nav-planet{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;letter-spacing:3px;color:var(--c);}
+.nav-city{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--muted);}
+.nav-live{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--c);display:flex;align-items:center;gap:6px;}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--c);animation:blink 1.4s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.2;}}
+
+.wrap{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:0 36px 100px;}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;align-items:center;padding:80px 0 60px;gap:60px;flex-wrap:wrap;}
+.hero-left{flex:1;min-width:300px;}
+.hero-eyebrow{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:4px;color:var(--muted);margin-bottom:16px;}
+.hero-name{font-family:'Orbitron',monospace;font-size:clamp(72px,14vw,160px);font-weight:900;color:var(--c);line-height:.9;letter-spacing:2px;text-shadow:0 0 60px rgba(255,51,85,.3);}
+.hero-city{font-family:'Share Tech Mono',monospace;font-size:clamp(12px,2vw,16px);letter-spacing:6px;color:var(--muted);margin-top:16px;margin-bottom:28px;}
+.hero-desc{font-size:16px;font-weight:300;color:var(--muted);line-height:1.75;max-width:440px;margin-bottom:28px;}
+.hero-tags{display:flex;gap:8px;flex-wrap:wrap;}
+.hero-tag{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--c);border:1px solid var(--c);padding:5px 14px;opacity:.8;}
+
+.hero-right{flex-shrink:0;}
+.planet-canvas-wrap{position:relative;width:320px;height:320px;}
+#planet-canvas{display:block;}
+
+/* SECTIONS */
+section{padding:80px 0 0;}
+.sec-label{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:4px;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:12px;}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--dim);}
+.sec-title{font-family:'Orbitron',monospace;font-size:clamp(22px,3vw,36px);font-weight:700;color:#fff;letter-spacing:2px;margin-bottom:8px;}
+.sec-sub{font-size:15px;font-weight:300;color:var(--muted);margin-bottom:36px;max-width:600px;}
+
+/* IDENTITY */
+.identity-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+@media(min-width:700px){.identity-grid{grid-template-columns:repeat(4,1fr);}}
+.id-card{border:1px solid var(--dim);background:var(--bg2);padding:22px 18px;}
+.id-card::before{content:'';display:block;width:24px;height:2px;background:var(--c);margin-bottom:14px;}
+.id-label{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:3px;color:var(--muted);margin-bottom:6px;}
+.id-val{font-size:15px;font-weight:600;color:#fff;}
+
+/* QUESTIONS */
+.q-block{display:flex;flex-direction:column;gap:12px;}
+.q-item{background:var(--bg2);border:1px solid var(--dim);padding:20px 20px;border-left:3px solid var(--c);}
+.q-cat{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:3px;color:var(--c);margin-bottom:6px;}
+.q-text{font-size:15px;font-weight:500;color:#fff;margin-bottom:14px;}
+.q-answers{display:flex;flex-direction:column;gap:5px;}
+.q-row{display:flex;align-items:center;gap:10px;}
+.q-ans{font-size:12px;color:var(--text);width:100px;flex-shrink:0;}
+.q-bw{flex:1;height:5px;background:var(--dim);}
+.q-b{height:100%;background:var(--c);}
+.q-pct{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--c);width:32px;text-align:right;}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+@media(min-width:600px){.stats-row{grid-template-columns:repeat(4,1fr);}}
+.stat-card{background:var(--bg2);border:1px solid var(--dim);padding:24px 18px;text-align:center;}
+.stat-val{font-family:'Orbitron',monospace;font-size:clamp(28px,4vw,44px);font-weight:900;color:var(--c);line-height:1;margin-bottom:6px;}
+.stat-label{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--muted);}
+
+/* DRESS CODE */
+.dress-grid{display:grid;grid-template-columns:1fr;gap:12px;}
+@media(min-width:600px){.dress-grid{grid-template-columns:repeat(3,1fr);}}
+.dress-card{background:var(--bg2);border:1px solid var(--dim);padding:20px 18px;}
+.dress-icon{font-size:28px;margin-bottom:10px;display:block;}
+.dress-title{font-size:13px;font-weight:600;color:#fff;margin-bottom:4px;}
+.dress-desc{font-size:12px;font-weight:300;color:var(--muted);line-height:1.6;}
+
+/* NAV PLANETS */
+.nav-planets{display:flex;gap:8px;flex-wrap:wrap;margin-top:40px;padding-top:40px;border-top:1px solid var(--dim);}
+.np-btn{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--nc);border:1px solid var(--nc);padding:8px 16px;text-decoration:none;opacity:.7;transition:opacity .2s;}
+.np-btn:hover{opacity:1;}
+.np-btn.active{opacity:1;background:var(--nc);color:#000;}
+
+/* FOOTER */
+footer{position:relative;z-index:2;border-top:1px solid var(--dim);padding:40px 36px;text-align:center;margin-top:80px;}
+.footer-back{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--muted);text-decoration:none;transition:color .2s;}
+.footer-back:hover{color:var(--c);}
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+<div class="scan"></div>
+<div class="corner c-tl"></div><div class="corner c-tr"></div>
+<div class="corner c-bl"></div><div class="corner c-br"></div>
+
+<nav>
+  <a class="nav-back" href="portal_event_concept.html">← THE PORTAL</a>
+  <div style="text-align:center">
+    <div class="nav-planet">NOVA</div>
+    <div class="nav-city">WARSZAWA · PL</div>
+  </div>
+  <div class="nav-live"><div class="live-dot"></div>PLANET ONLINE</div>
+</nav>
+
+<div class="wrap">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-left">
+    <div class="hero-eyebrow">// PLANET 01 — FIRE &amp; AMBITION</div>
+    <div class="hero-name">NOVA</div>
+    <div class="hero-city">WARSZAWA · POLSKA · PL</div>
+    <p class="hero-desc">Czerwona planeta ognia i ambicji. Energia, impet, duch lidera. Miejsce gdzie każda odpowiedź brzmi jak manifest — pewnie, szybko, bez wątpienia.</p>
+    <div class="hero-tags">
+      <span class="hero-tag">OGIEŃ</span>
+      <span class="hero-tag">AMBICJA</span>
+      <span class="hero-tag">ENERGIA</span>
+      <span class="hero-tag">LEADERSHIP</span>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="planet-canvas-wrap">
+      <canvas id="planet-canvas" width="320" height="320"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- TOŻSAMOŚĆ -->
+<section>
+  <div class="sec-label">// TOŻSAMOŚĆ PLANETY</div>
+  <h2 class="sec-title">Kim jesteś jako NOVA</h2>
+  <p class="sec-sub">Planeta nadaje Ci kolor, charakter i przynależność na całą noc eventu.</p>
+  <div class="identity-grid">
+    <div class="id-card"><div class="id-label">PLANETA</div><div class="id-val">NOVA</div></div>
+    <div class="id-card"><div class="id-label">MIASTO</div><div class="id-val">Warszawa</div></div>
+    <div class="id-card"><div class="id-label">KOLOR</div><div class="id-val">Czerwień</div></div>
+    <div class="id-card"><div class="id-label">ŻYWIOŁ</div><div class="id-val">Ogień</div></div>
+    <div class="id-card"><div class="id-label">KLIMAT</div><div class="id-val">Futurystyczny, dynamiczny</div></div>
+    <div class="id-card"><div class="id-label">CHARAKTER</div><div class="id-val">Lider, pionier</div></div>
+    <div class="id-card"><div class="id-label">TEMATY PYTAŃ</div><div class="id-val">Technologia, przyszłość</div></div>
+    <div class="id-card"><div class="id-label">PULA PYTAŃ</div><div class="id-val">Polska · PL</div></div>
+  </div>
+</section>
+
+<!-- PRZYKŁADOWE PYTANIA -->
+<section>
+  <div class="sec-label">// PRZYKŁADOWE PYTANIA</div>
+  <h2 class="sec-title">Pytania z puli NOVA</h2>
+  <p class="sec-sub">Odpowiedzi zbierane podczas rejestracji — uczestnicy sami tworzą grę.</p>
+  <div class="q-block">
+    <div class="q-item">
+      <div class="q-cat">TECHNOLOGIA</div>
+      <div class="q-text">Jaką aplikację używasz najczęściej w pracy?</div>
+      <div class="q-answers">
+        <div class="q-row"><div class="q-ans">Slack</div><div class="q-bw"><div class="q-b" style="width:80%"></div></div><div class="q-pct">80 pkt</div></div>
+        <div class="q-row"><div class="q-ans">Teams</div><div class="q-bw"><div class="q-b" style="width:55%"></div></div><div class="q-pct">55 pkt</div></div>
+        <div class="q-row"><div class="q-ans">Notion</div><div class="q-bw"><div class="q-b" style="width:30%"></div></div><div class="q-pct">30 pkt</div></div>
+      </div>
+    </div>
+    <div class="q-item">
+      <div class="q-cat">PRZYSZŁOŚĆ</div>
+      <div class="q-text">Co będzie największą technologią za 10 lat?</div>
+      <div class="q-answers">
+        <div class="q-row"><div class="q-ans">AI</div><div class="q-bw"><div class="q-b" style="width:90%"></div></div><div class="q-pct">90 pkt</div></div>
+        <div class="q-row"><div class="q-ans">VR / AR</div><div class="q-bw"><div class="q-b" style="width:45%"></div></div><div class="q-pct">45 pkt</div></div>
+        <div class="q-row"><div class="q-ans">Kwantowe</div><div class="q-bw"><div class="q-b" style="width:20%"></div></div><div class="q-pct">20 pkt</div></div>
+      </div>
+    </div>
+    <div class="q-item">
+      <div class="q-cat">INNOWACJE</div>
+      <div class="q-text">Bez czego nie wyobrażasz sobie pracy zdalnej?</div>
+      <div class="q-answers">
+        <div class="q-row"><div class="q-ans">Internet</div><div class="q-bw"><div class="q-b" style="width:95%"></div></div><div class="q-pct">95 pkt</div></div>
+        <div class="q-row"><div class="q-ans">Kawa</div><div class="q-bw"><div class="q-b" style="width:60%"></div></div><div class="q-pct">60 pkt</div></div>
+        <div class="q-row"><div class="q-ans">Słuchawki</div><div class="q-bw"><div class="q-b" style="width:35%"></div></div><div class="q-pct">35 pkt</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATYSTYKI -->
+<section>
+  <div class="sec-label">// STATYSTYKI PLANETY</div>
+  <h2 class="sec-title">NOVA w liczbach</h2>
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-val">~250</div><div class="stat-label">UCZESTNIKÓW</div></div>
+    <div class="stat-card"><div class="stat-val">18</div><div class="stat-label">PYTAŃ W PULI</div></div>
+    <div class="stat-card"><div class="stat-val">5:00</div><div class="stat-label">NA PYTANIE</div></div>
+    <div class="stat-card"><div class="stat-val">3</div><div class="stat-label">MAX SKUCHY</div></div>
+  </div>
+</section>
+
+<!-- DRESS CODE -->
+<section>
+  <div class="sec-label">// DRESS CODE OBSŁUGI</div>
+  <h2 class="sec-title">Klimat planety NOVA</h2>
+  <p class="sec-sub">Obsługa i scenografia w pełni odzwierciedlają charakter planety.</p>
+  <div class="dress-grid">
+    <div class="dress-card">
+      <span class="dress-icon">🔴</span>
+      <div class="dress-title">Kolor przewodni</div>
+      <div class="dress-desc">Głęboka czerwień, czerń, metaliczne akcenty. Stroje astronautów misji bojowej.</div>
+    </div>
+    <div class="dress-card">
+      <span class="dress-icon">🔥</span>
+      <div class="dress-title">Atmosfera</div>
+      <div class="dress-desc">Dynamiczna muzyka, ostre światła, energetyczne intro. Wejście na planetę to wejście w tryb lidera.</div>
+    </div>
+    <div class="dress-card">
+      <span class="dress-icon">⚡</span>
+      <div class="dress-title">Scenografia</div>
+      <div class="dress-desc">Czerwone neony, ekrany z danymi, industrialny klimat kosmicznej bazy dowodzenia.</div>
+    </div>
+  </div>
+</section>
+
+<!-- NAWIGACJA MIĘDZY PLANETAMI -->
+<section>
+  <div class="sec-label">// INNE PLANETY</div>
+  <h2 class="sec-title">Cały system</h2>
+  <div class="nav-planets">
+    <a class="np-btn active" style="--nc:#ff3355" href="nova.html">🔴 NOVA — Warszawa</a>
+    <a class="np-btn" style="--nc:#aa44ff" href="nexus.html">🟣 NEXUS — Praga</a>
+    <a class="np-btn" style="--nc:#ffaa22" href="aurum.html">🟡 AURUM — Budapeszt</a>
+    <a class="np-btn" style="--nc:#22ccff" href="solaris.html">🔵 SOLARIS — Kijów</a>
+  </div>
+</section>
+
+</div>
+
+<footer>
+  <a class="footer-back" href="portal_event_concept.html">← Powrót do THE PORTAL</a>
+</footer>
+
+<script>
+// Starfield
+const bgc = document.getElementById('bg-canvas'), bgx = bgc.getContext('2d');
+let bgs = [];
+function bgresize(){bgc.width=window.innerWidth;bgc.height=window.innerHeight;}
+function bginit(){bgs=[];for(let i=0;i<160;i++)bgs.push({x:Math.random()*bgc.width,y:Math.random()*bgc.height,r:Math.random()*1.2+.2,a:Math.random()*.5+.1,s:Math.random()*.004+.001,p:Math.random()*Math.PI*2});}
+function bgdraw(t){bgx.clearRect(0,0,bgc.width,bgc.height);for(const s of bgs){const a=s.a*(.5+.5*Math.sin(t*s.s*60+s.p));bgx.beginPath();bgx.arc(s.x,s.y,s.r,0,Math.PI*2);bgx.fillStyle=`rgba(255,180,180,${a.toFixed(2)})`;bgx.fill();}}
+function bgloop(t){bgdraw(t/1000);requestAnimationFrame(bgloop);}
+bgresize();bginit();window.addEventListener('resize',()=>{bgresize();bginit();});requestAnimationFrame(bgloop);
+
+// Planet canvas
+const pc = document.getElementById('planet-canvas');
+const px = pc.getContext('2d');
+const PW = 320, PH = 320, PCX = 160, PCY = 160;
+let pAngle = 0;
+
+function drawPlanet(t) {
+  px.clearRect(0, 0, PW, PH);
+
+  // Atmosphere glow
+  const atm = px.createRadialGradient(PCX, PCY, 80, PCX, PCY, 155);
+  atm.addColorStop(0, 'rgba(255,51,85,0)');
+  atm.addColorStop(0.7, 'rgba(255,51,85,0.08)');
+  atm.addColorStop(1, 'rgba(255,51,85,0.25)');
+  px.fillStyle = atm;
+  px.beginPath(); px.arc(PCX, PCY, 155, 0, Math.PI*2); px.fill();
+
+  // Planet body
+  const body = px.createRadialGradient(PCX - 30, PCY - 30, 10, PCX, PCY, 100);
+  body.addColorStop(0, '#ff9977');
+  body.addColorStop(0.4, '#cc2244');
+  body.addColorStop(0.8, '#880022');
+  body.addColorStop(1, '#440011');
+  px.fillStyle = body;
+  px.beginPath(); px.arc(PCX, PCY, 100, 0, Math.PI*2); px.fill();
+
+  // Surface bands
+  px.save();
+  px.beginPath(); px.arc(PCX, PCY, 100, 0, Math.PI*2); px.clip();
+  for (let i = 0; i < 6; i++) {
+    const y = PCY - 70 + i * 28;
+    const wave = Math.sin(t * 0.0003 + i) * 4;
+    px.beginPath();
+    px.ellipse(PCX, y + wave, 110, 6, 0, 0, Math.PI*2);
+    px.fillStyle = `rgba(0,0,0,${0.08 + i * 0.02})`;
+    px.fill();
+  }
+  // Bright highlight
+  const hl = px.createRadialGradient(PCX - 35, PCY - 40, 0, PCX - 35, PCY - 40, 60);
+  hl.addColorStop(0, 'rgba(255,200,180,0.35)');
+  hl.addColorStop(1, 'rgba(255,100,80,0)');
+  px.fillStyle = hl;
+  px.beginPath(); px.arc(PCX, PCY, 100, 0, Math.PI*2); px.fill();
+  px.restore();
+
+  // Border
+  px.strokeStyle = 'rgba(255,51,85,0.6)';
+  px.lineWidth = 1.5;
+  px.beginPath(); px.arc(PCX, PCY, 100, 0, Math.PI*2); px.stroke();
+
+  // Rings
+  px.save();
+  px.translate(PCX, PCY);
+  px.scale(1, 0.22);
+  for (let i = 0; i < 3; i++) {
+    const rr = 118 + i * 14;
+    px.beginPath();
+    px.arc(0, 0, rr, 0, Math.PI*2);
+    px.strokeStyle = `rgba(255,80,60,${0.35 - i * 0.1})`;
+    px.lineWidth = 4 - i;
+    px.stroke();
+  }
+  px.restore();
+
+  // Orbiting moon
+  pAngle += 0.012;
+  const mx = PCX + Math.cos(pAngle) * 128;
+  const my = PCY + Math.sin(pAngle) * 28;
+  px.beginPath(); px.arc(mx, my, 5, 0, Math.PI*2);
+  px.fillStyle = 'rgba(255,150,120,0.8)';
+  px.fill();
+  // Moon glow
+  const mg = px.createRadialGradient(mx, my, 0, mx, my, 12);
+  mg.addColorStop(0, 'rgba(255,100,80,0.4)');
+  mg.addColorStop(1, 'rgba(255,100,80,0)');
+  px.fillStyle = mg;
+  px.beginPath(); px.arc(mx, my, 12, 0, Math.PI*2); px.fill();
+}
+
+function planetLoop(t) { drawPlanet(t); requestAnimationFrame(planetLoop); }
+requestAnimationFrame(planetLoop);
+</script>
+</body>
+</html>
